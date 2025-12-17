@@ -7,7 +7,7 @@ import { intlayer, intlayerProxy } from "vite-intlayer";
 
 export default defineConfig((config) => ({
   build: {
-    sourcemap: "hidden",
+    sourcemap: false,
   },
   plugins: [
     tailwindcss(),
