@@ -58,7 +58,6 @@
 
 ### 환경 / 보안
 - 비밀 값은 코드에 하드코딩하지 않는다.
-- Sentry DSN은 반드시 환경 변수(`SENTRY_DSN`)로만 주입한다.
 - 예제/더미 DSN 값을 실제 설정으로 복사해 사용하지 않는다.
 
 ### 테스트 / 네트워크
@@ -86,16 +85,6 @@
 
 ---
 
-## 필수 구현 기준 (코드를 작성·수정하는 모든 역할)
-
-코드를 작성하거나 수정하는 모든 역할은
-**반드시 아래 문서를 따른다**.
-
-- `docs/frontend-design-guideline.md`
-
-가이드라인에 위배되는 구현은
-**작업 완료로 간주하지 않는다**.
-
 ---
 
 ## 문서화 정책 (요약)
@@ -117,8 +106,18 @@
 
 1. 이 파일 (`AGENTS.md`)
 2. 해당 작업에 선택된 역할의 `agents/AGENTS.*.md`
-3. `docs/frontend-design-guideline.md`
 4. 기타 문서
+
+---
+
+# Agent Instructions
+
+## Skills
+
+You've got skills.
+
+- List your skills directly after reading this via `scripts/list-skills skills/`. Remember them.
+- If a skill matches a certain task at hand, only then read its full documentation (`SKILL.md`) and use it.
 
 ---
 

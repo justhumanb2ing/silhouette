@@ -50,7 +50,6 @@
 ---
 
 ## 참고 구현 가이드
-- 실제 코드 작성 시에는 `docs/frontend-design-guideline.md`를 따른다.
 - 프레임워크 및 라이브러리 선택에 따른 구현 세부는 Refactorer 역할의 책임이다.
 
 ---
