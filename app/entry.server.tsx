@@ -14,7 +14,7 @@ export const handleError = Sentry.createSentryHandleError({
 
 export const streamTimeout = 5_000;
 
-function handleRequest(
+async function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
@@ -22,7 +22,7 @@ function handleRequest(
   // If you have middleware enabled:
   // loadContext: RouterContextProvider
   loadContext: AppLoadContext
-) {
+): Promise<Response> {
   // https://httpwg.org/specs/rfc9110.html#HEAD
   if (request.method.toUpperCase() === "HEAD") {
     return new Response(null, {
@@ -31,7 +31,7 @@ function handleRequest(
     });
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<Response>((resolve, reject) => {
     let shellRendered = false;
     let userAgent = request.headers.get("user-agent");
 
