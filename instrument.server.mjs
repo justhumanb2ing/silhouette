@@ -1,5 +1,5 @@
-import * as Sentry from '@sentry/react-router';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import * as Sentry from "@sentry/react-router";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
 Sentry.init({
   dsn: "https://41024f2082a6e7b4ef4599a24c0f357f@o4510413309935616.ingest.us.sentry.io/4510550297477120",
@@ -20,7 +20,10 @@ Sentry.init({
     // Filter out 404s from error reporting
     if (event.exception) {
       const error = event.exception.values?.[0];
-      if (error?.type === "NotFoundException" || error?.value?.includes("404")) {
+      if (
+        error?.type === "NotFoundException" ||
+        error?.value?.includes("404")
+      ) {
         return null;
       }
     }
