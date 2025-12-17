@@ -8,7 +8,7 @@ export default defineConfig({
   datasource: {
     url: env("DIRECT_URL"),
   },
-  // migrations: {
-  //   path: "prisma/migrations",
-  // },
+  migrations: {
+    path: "prisma/migrations",
+  },
 });
