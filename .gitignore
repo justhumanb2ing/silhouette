@@ -9,7 +9,7 @@
 
 # Intlayer가 생성한 파일 무시
 .intlayer
-app/generated/prisma
+# app/generated/prisma
 
 # Sentry Config File
 .env.sentry-build-plugin
