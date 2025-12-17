@@ -22,12 +22,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader(args: Route.LoaderArgs) {
-  const tasks = await prisma.tasks.findMany();
-  return tasks;
-}
-
-export default function LandingRoute({ loaderData }: Route.ComponentProps) {
+export default function LandingRoute() {
   const {
     layout: {
       auth: { signIn, signUp },
@@ -39,14 +34,14 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
   } = useIntlayer("landing-page");
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-mono selection:bg-[#ccff00] selection:text-black overflow-x-hidden relative">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-mono selection:bg-acid selection:text-black overflow-x-hidden relative">
       <div className="bg-noise" />
 
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
         <div className="w-full px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-[#ccff00] flex items-center justify-center text-black font-anton text-xs">
+            <div className="w-6 h-6 bg-acid flex items-center justify-center text-black font-anton text-xs">
               S
             </div>
             <span className="font-anton text-xl uppercase tracking-tighter">
@@ -61,7 +56,7 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
             <SignedOut>
               <Button
                 variant="ghost"
-                className="text-zinc-400 hover:text-[#ccff00] hover:bg-transparent uppercase text-xs tracking-widest"
+                className="text-zinc-400 hover:text-acid hover:bg-transparent uppercase text-xs tracking-widest"
                 render={
                   <SignInButton>
                     <span>[{signIn}]</span>
@@ -69,7 +64,7 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
                 }
               />
               <Button
-                className="bg-zinc-100 text-black hover:bg-[#ccff00] hover:text-black rounded-none h-8 px-4 text-xs uppercase font-bold tracking-widest border border-transparent hover:border-black"
+                className="bg-zinc-100 text-black hover:bg-acid hover:text-black rounded-none h-8 px-4 text-xs uppercase font-bold tracking-widest border border-transparent hover:border-black"
                 render={
                   <SignUpButton>
                     <span>{signUp}</span>
@@ -94,16 +89,16 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
             <h1 className="font-anton text-6xl md:text-8xl lg:text-9xl uppercase leading-[0.85] tracking-tight mb-8">
               Capture Your
               <br />
-              <span className="text-[#ccff00]">Digital World</span>.
+              <span className="text-acid">Digital World</span>.
             </h1>
-            <p className="font-mono text-zinc-400 text-sm md:text-base max-w-xl leading-relaxed mb-12 border-l-2 border-[#ccff00] pl-6">
+            <p className="font-mono text-zinc-400 text-sm md:text-base max-w-xl leading-relaxed mb-12 border-l-2 border-acid pl-6">
               {subtitle}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6">
               <Button
                 size="lg"
-                className="bg-[#ccff00] text-black hover:bg-white hover:text-black rounded-none h-14 px-8 font-bold border-2 border-[#ccff00] hover:border-white transition-all uppercase tracking-wide"
+                className="bg-acid text-black hover:bg-white hover:text-black rounded-none h-14 px-8 font-bold border-2 border-acid hover:border-white transition-all uppercase tracking-wide"
                 render={
                   <SignUpButton>
                     <span className="flex items-center gap-2">
@@ -120,7 +115,7 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
                 A
               </div>
               <div className="w-full h-full border border-zinc-800 rounded-sm relative p-4">
-                <div className="absolute top-2 left-2 w-2 h-2 bg-[#ccff00]"></div>
+                <div className="absolute top-2 left-2 w-2 h-2 bg-acid"></div>
                 <div className="absolute top-2 right-2 w-2 h-2 border border-zinc-600"></div>
                 <div className="absolute bottom-2 left-2 w-2 h-2 border border-zinc-600"></div>
                 <div className="absolute bottom-2 right-2 w-2 h-2 bg-zinc-800"></div>
@@ -129,7 +124,7 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
                   <p>{`> INITIALIZING SEQUENCE...`}</p>
                   <p>{`> CONNECTING TO NEURAL LINK...`}</p>
                   <p>{`> STATUS: ONLINE`}</p>
-                  <p className="text-[#ccff00] animate-pulse">{`> AWAITING INPUT_`}</p>
+                  <p className="text-acid animate-pulse">{`> AWAITING INPUT_`}</p>
                 </div>
               </div>
             </div>
@@ -147,7 +142,7 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
                 <span className="font-mono text-zinc-600 text-xs">
                   0{idx + 1}
                 </span>
-                <div className="text-zinc-500 group-hover:text-[#ccff00] transition-colors">
+                <div className="text-zinc-500 group-hover:text-acid transition-colors">
                   {idx === 0 && <Zap className="w-5 h-5" />}
                   {idx === 1 && <Hash className="w-5 h-5" />}
                   {idx === 2 && <Database className="w-5 h-5" />}
@@ -165,7 +160,7 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
         </section>
 
         {/* Footer CTA */}
-        <section className="p-12 md:p-24 text-center border-b border-zinc-800 bg-[#ccff00] text-black">
+        <section className="p-12 md:p-24 text-center border-b border-zinc-800 bg-acid text-black">
           <h2 className="font-anton text-5xl md:text-8xl uppercase leading-[0.8] tracking-tight mb-8">
             {secondaryCta}
           </h2>
@@ -189,13 +184,13 @@ export default function LandingRoute({ loaderData }: Route.ComponentProps) {
             <p className="mt-4 text-zinc-600">{footer.copyright}</p>
           </div>
           <div className="flex gap-8 mt-8 md:mt-0">
-            <span className="hover:text-[#ccff00] cursor-pointer">
+            <span className="hover:text-acid cursor-pointer">
               Privacy_Protocol
             </span>
-            <span className="hover:text-[#ccff00] cursor-pointer">
+            <span className="hover:text-acid cursor-pointer">
               Terms_Of_engagement
             </span>
-            <span className="hover:text-[#ccff00] cursor-pointer">
+            <span className="hover:text-acid cursor-pointer">
               System_Status: Operational
             </span>
           </div>
