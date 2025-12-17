@@ -11,6 +11,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/logo";
+import { prisma } from "@/config/supabase/db";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -19,7 +20,13 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function LandingRoute() {
+export async function loader(args: Route.LoaderArgs) {
+  const tasks = await prisma.tasks.findMany();
+  return tasks;
+}
+
+export default function LandingRoute({ loaderData }: Route.ComponentProps) {
+  console.log(loaderData);
   const {
     layout: {
       auth: { signIn, signUp },

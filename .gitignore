@@ -9,3 +9,4 @@
 
 # Intlayer가 생성한 파일 무시
 .intlayer
+/generated/prisma
