@@ -7,6 +7,7 @@ export default {
   ssr: true,
   presets: [vercelPreset()],
   future: {
-    v8_middleware: true,
+    // Keep middleware disabled until the Vercel adapter supplies a RouterContextProvider load context.
+    v8_middleware: false,
   },
 } satisfies Config;

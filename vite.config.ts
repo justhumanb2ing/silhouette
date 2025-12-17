@@ -4,9 +4,9 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { intlayer, intlayerProxy } from "vite-intlayer";
 
-export default defineConfig(() => ({
+export default defineConfig(({ isSsrBuild }) => ({
   build: {
-    sourcemap: false,
+    rollupOptions: isSsrBuild ? { input: "./server/app.ts" } : undefined,
   },
   plugins: [
     tailwindcss(),
