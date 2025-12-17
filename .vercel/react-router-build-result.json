@@ -1,0 +1,166 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "root": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/($lang)._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/($lang)._auth.sign-in._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/($lang)._auth.sign-up._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "app/root.tsx",
+        "path": "",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/($lang)": {
+        "id": "routes/($lang)",
+        "parentId": "root",
+        "file": "app/routes/($lang).tsx",
+        "path": ":lang?",
+        "config": {}
+      },
+      "routes/($lang)._index": {
+        "id": "routes/($lang)._index",
+        "parentId": "routes/($lang)",
+        "file": "app/routes/($lang)._index.tsx",
+        "index": true,
+        "config": {}
+      },
+      "routes/($lang)._auth": {
+        "id": "routes/($lang)._auth",
+        "parentId": "routes/($lang)",
+        "file": "app/routes/($lang)._auth.tsx",
+        "config": {}
+      },
+      "routes/($lang)._auth.sign-in._index": {
+        "id": "routes/($lang)._auth.sign-in._index",
+        "parentId": "routes/($lang)._auth",
+        "file": "app/routes/($lang)._auth.sign-in._index.tsx",
+        "path": "sign-in",
+        "index": true,
+        "config": {}
+      },
+      "routes/($lang)._auth.sign-up._index": {
+        "id": "routes/($lang)._auth.sign-up._index",
+        "parentId": "routes/($lang)._auth",
+        "file": "app/routes/($lang)._auth.sign-up._index.tsx",
+        "path": "sign-up",
+        "index": true,
+        "config": {}
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "/Users/zentechie/Documents/Github_Repo/silhouette/app",
+    "basename": "/",
+    "buildDirectory": "/Users/zentechie/Documents/Github_Repo/silhouette/build",
+    "future": {
+      "unstable_optimizeDeps": false,
+      "unstable_subResourceIntegrity": false,
+      "v8_middleware": true,
+      "v8_splitRouteModules": false,
+      "v8_viteEnvironmentApi": false
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "root.tsx",
+        "path": ""
+      },
+      "routes/($lang)": {
+        "id": "routes/($lang)",
+        "parentId": "root",
+        "file": "routes/($lang).tsx",
+        "path": ":lang?"
+      },
+      "routes/($lang)._index": {
+        "id": "routes/($lang)._index",
+        "parentId": "routes/($lang)",
+        "file": "routes/($lang)._index.tsx",
+        "index": true
+      },
+      "routes/($lang)._auth": {
+        "id": "routes/($lang)._auth",
+        "parentId": "routes/($lang)",
+        "file": "routes/($lang)._auth.tsx"
+      },
+      "routes/($lang)._auth.sign-in._index": {
+        "id": "routes/($lang)._auth.sign-in._index",
+        "parentId": "routes/($lang)._auth",
+        "file": "routes/($lang)._auth.sign-in._index.tsx",
+        "path": "sign-in",
+        "index": true
+      },
+      "routes/($lang)._auth.sign-up._index": {
+        "id": "routes/($lang)._auth.sign-up._index",
+        "parentId": "routes/($lang)._auth",
+        "file": "routes/($lang)._auth.sign-up._index.tsx",
+        "path": "sign-up",
+        "index": true
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true,
+    "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.tsx",
+        "children": [
+          {
+            "id": "routes/($lang)",
+            "file": "routes/($lang).tsx",
+            "path": ":lang?",
+            "children": [
+              {
+                "id": "routes/($lang)._index",
+                "file": "routes/($lang)._index.tsx",
+                "index": true
+              },
+              {
+                "id": "routes/($lang)._auth",
+                "file": "routes/($lang)._auth.tsx",
+                "children": [
+                  {
+                    "id": "routes/($lang)._auth.sign-in._index",
+                    "file": "routes/($lang)._auth.sign-in._index.tsx",
+                    "path": "sign-in",
+                    "index": true
+                  },
+                  {
+                    "id": "routes/($lang)._auth.sign-up._index",
+                    "file": "routes/($lang)._auth.sign-up._index.tsx",
+                    "path": "sign-up",
+                    "index": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}
