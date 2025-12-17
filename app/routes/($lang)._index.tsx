@@ -10,7 +10,6 @@ import {
 import { ArrowRight, CornerDownRight, Database, Hash, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { prisma } from "prisma/db";
 
 export function meta({}: Route.MetaArgs) {
   return [
