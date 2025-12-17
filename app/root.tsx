@@ -10,6 +10,11 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 
+import { clerkMiddleware, rootAuthLoader } from "@clerk/react-router/server";
+import { ClerkProvider } from "@clerk/react-router";
+import { enUS } from "@clerk/localizations";
+
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -23,9 +28,13 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+export const middleware: Route.MiddlewareFunction[] = [clerkMiddleware()];
+
+export const loader = (args: Route.LoaderArgs) => rootAuthLoader(args);
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -41,8 +50,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
-  return <Outlet />;
+export default function App({ loaderData }: Route.ComponentProps) {
+  return (
+    <ClerkProvider
+      loaderData={loaderData}
+      localization={enUS}
+      appearance={{
+        theme: "simple",
+        variables: {
+          colorBackground: "white",
+        },
+        layout: {
+          privacyPageUrl: "https://clerk.com/privacy",
+          termsPageUrl: "https://clerk.com/legal/privacy",
+          unsafe_disableDevelopmentModeWarnings: true,
+          socialButtonsPlacement: "bottom",
+          socialButtonsVariant: "iconButton",
+          logoPlacement: "outside",
+        },
+      }}
+    >
+      <main className="h-dvh flex flex-col">
+        <section className="grow">
+          <Outlet />
+        </section>
+      </main>
+    </ClerkProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

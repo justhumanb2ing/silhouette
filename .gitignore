@@ -1,7 +1,11 @@
 .DS_Store
+.env.local
 .env
 /node_modules/
 
 # React Router
 /.react-router/
 /build/
+
+# Intlayer가 생성한 파일 무시
+.intlayer
