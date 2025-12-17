@@ -5,17 +5,23 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { intlayer, intlayerProxy } from "vite-intlayer";
 
-export default defineConfig(config => ({
+export default defineConfig((config) => ({
+  build: {
+    sourcemap: "hidden",
+  },
   plugins: [
     tailwindcss(),
     reactRouter(),
     tsconfigPaths(),
     intlayer(),
     intlayerProxy(),
-    sentryReactRouter({
-      org: "hwisik",
-      project: "silhouette",
-      authToken: process.env.SENTRY_AUTH_TOKEN
-    }, config)
-  ]
+    sentryReactRouter(
+      {
+        org: "hwisik",
+        project: "silhouette",
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+      },
+      config
+    ),
+  ],
 }));
