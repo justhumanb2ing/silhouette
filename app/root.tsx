@@ -15,7 +15,6 @@ import { clerkMiddleware, rootAuthLoader } from "@clerk/react-router/server";
 import { ClerkProvider } from "@clerk/react-router";
 import { enUS } from "@clerk/localizations";
 
-
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -41,6 +40,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <script
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id="693046de-b741-4043-b9bb-3016897f9cb6"
+        ></script>
       </head>
       <body>
         {children}
