@@ -69,7 +69,7 @@
     "future": {
       "unstable_optimizeDeps": false,
       "unstable_subResourceIntegrity": false,
-      "v8_middleware": true,
+      "v8_middleware": false,
       "v8_splitRouteModules": false,
       "v8_viteEnvironmentApi": false
     },
@@ -119,6 +119,43 @@
     "serverModuleFormat": "esm",
     "ssr": true,
     "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.tsx",
+        "children": [
+          {
+            "id": "routes/($lang)",
+            "file": "routes/($lang).tsx",
+            "path": ":lang?",
+            "children": [
+              {
+                "id": "routes/($lang)._index",
+                "file": "routes/($lang)._index.tsx",
+                "index": true
+              },
+              {
+                "id": "routes/($lang)._auth",
+                "file": "routes/($lang)._auth.tsx",
+                "children": [
+                  {
+                    "id": "routes/($lang)._auth.sign-in._index",
+                    "file": "routes/($lang)._auth.sign-in._index.tsx",
+                    "path": "sign-in",
+                    "index": true
+                  },
+                  {
+                    "id": "routes/($lang)._auth.sign-up._index",
+                    "file": "routes/($lang)._auth.sign-up._index.tsx",
+                    "path": "sign-up",
+                    "index": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
       {
         "id": "root",
         "path": "",

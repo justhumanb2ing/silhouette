@@ -12,3 +12,7 @@
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+/app/generated/prisma
+
+/generated/prisma

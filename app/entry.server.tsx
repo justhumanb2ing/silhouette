@@ -1,10 +1,10 @@
-import './instrument.server';
+import "../instrument.server";
 import * as Sentry from "@sentry/react-router";
 import { handleRequest as vercelHandleRequest } from "@vercel/react-router/entry.server";
 import type { EntryContext, RouterContextProvider } from "react-router";
 
 export const handleError = Sentry.createSentryHandleError({
-  logErrors: false
+  logErrors: false,
 });
 
 export const streamTimeout = 5_000;
