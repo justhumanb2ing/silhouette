@@ -97,6 +97,7 @@ export async function updateLinkMetadataForUser(
     linkId: string;
     title: string | null;
     description: string | null;
+    categoryId: string | null;
   }
 ): Promise<{ updated: boolean }> {
   const result = await prisma.links.updateMany({
@@ -104,6 +105,7 @@ export async function updateLinkMetadataForUser(
     data: {
       title: input.title,
       description: input.description,
+      category_id: input.categoryId,
       updated_at: new Date(),
     },
   });

@@ -1,7 +1,7 @@
 import { getAuth } from "@clerk/react-router/server";
 import * as Sentry from "@sentry/react-router";
 import { ExternalLink, Pencil, Star, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Form,
   type ShouldRevalidateFunctionArgs,
@@ -126,7 +126,15 @@ function normalizeOptionalTextField(
   return { ok: true, value: trimmed };
 }
 
-function LinkItemCard({ link }: { link: LinkListItem }) {
+function LinkItemCard({
+  link,
+  categories,
+  categoryName,
+}: {
+  link: LinkListItem;
+  categories: { id: string; name: string }[];
+  categoryName: string | null;
+}) {
   const favoriteFetcher = useFetcher<IntentResult>();
   const updateFetcher = useFetcher<IntentResult>();
   const deleteFetcher = useFetcher<IntentResult>();
@@ -140,13 +148,17 @@ function LinkItemCard({ link }: { link: LinkListItem }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState(link.title ?? "");
   const [draftDescription, setDraftDescription] = useState(link.description ?? "");
+  const [draftCategoryId, setDraftCategoryId] = useState(link.category_id ?? "");
+  const [draftCategoryName, setDraftCategoryName] = useState("");
 
   useEffect(() => {
     if (isEditOpen) {
       setDraftTitle(link.title ?? "");
       setDraftDescription(link.description ?? "");
+      setDraftCategoryId(link.category_id ?? "");
+      setDraftCategoryName("");
     }
-  }, [isEditOpen, link.description, link.title]);
+  }, [isEditOpen, link.category_id, link.description, link.title]);
 
   useEffect(() => {
     if (updateFetcher.data?.ok) {
@@ -239,30 +251,52 @@ function LinkItemCard({ link }: { link: LinkListItem }) {
                   </DialogDescription>
                 </DialogHeader>
 
-                <updateFetcher.Form method="post" className="flex flex-col gap-3">
-                  <input type="hidden" name="intent" value="update-link" />
-                  <input type="hidden" name="linkId" value={link.id} />
-                  <Input
-                    type="text"
-                    name="title"
-                    placeholder="Title"
-                    value={draftTitle}
-                    onChange={(event) => setDraftTitle(event.target.value)}
-                    autoComplete="off"
-                    autoFocus
-                  />
-                  <Textarea
-                    name="description"
-                    placeholder="Description"
-                    value={draftDescription}
-                    onChange={(event) => setDraftDescription(event.target.value)}
-                  />
-
-                  {updateFetcher.data && !updateFetcher.data.ok ? (
-                    <div className="text-sm text-destructive" role="alert">
-                      {updateFetcher.data.message}
-                    </div>
-                  ) : null}
+	                <updateFetcher.Form method="post" className="flex flex-col gap-3">
+	                  <input type="hidden" name="intent" value="update-link" />
+	                  <input type="hidden" name="linkId" value={link.id} />
+	                  <Input
+	                    type="text"
+	                    name="title"
+	                    placeholder="Title"
+	                    value={draftTitle}
+	                    onChange={(event) => setDraftTitle(event.target.value)}
+	                    autoComplete="off"
+	                    autoFocus
+	                  />
+	                  <Textarea
+	                    name="description"
+	                    placeholder="Description"
+	                    value={draftDescription}
+	                    onChange={(event) => setDraftDescription(event.target.value)}
+	                  />
+	                  <div className="flex flex-col gap-2 sm:flex-row">
+	                    <NativeSelect
+	                      name="categoryId"
+	                      value={draftCategoryId}
+	                      onChange={(event) => setDraftCategoryId(event.target.value)}
+	                    >
+	                      <NativeSelectOption value="">카테고리 없음</NativeSelectOption>
+	                      {categories.map((category) => (
+	                        <NativeSelectOption key={category.id} value={category.id}>
+	                          {category.name}
+	                        </NativeSelectOption>
+	                      ))}
+	                    </NativeSelect>
+	                    <Input
+	                      name="categoryName"
+	                      type="text"
+	                      placeholder="새 카테고리 이름 (선택사항)"
+	                      autoComplete="off"
+	                      value={draftCategoryName}
+	                      onChange={(event) => setDraftCategoryName(event.target.value)}
+	                    />
+	                  </div>
+	
+	                  {updateFetcher.data && !updateFetcher.data.ok ? (
+	                    <div className="text-sm text-destructive" role="alert">
+	                      {updateFetcher.data.message}
+	                    </div>
+	                  ) : null}
 
                   <DialogFooter>
                     <Button
@@ -330,6 +364,9 @@ function LinkItemCard({ link }: { link: LinkListItem }) {
         </div>
 
         <div className="flex flex-col gap-1">
+          {categoryName ? (
+            <div className="text-muted-foreground text-xs">{categoryName}</div>
+          ) : null}
           <div className="font-medium leading-snug">{displayTitle}</div>
           <div className="text-muted-foreground text-sm leading-snug">
             {displayDescription}
@@ -486,6 +523,8 @@ export async function action(args: Route.ActionArgs) {
     const linkId = formData.get("linkId");
     const rawTitle = formData.get("title");
     const rawDescription = formData.get("description");
+    const rawCategoryId = formData.get("categoryId");
+    const rawCategoryName = formData.get("categoryName");
 
     if (typeof linkId !== "string" || !isUuidish(linkId)) {
       return data<IntentResult>(
@@ -518,11 +557,53 @@ export async function action(args: Route.ActionArgs) {
 
     try {
       const prisma = await getPrisma();
+      let resolvedCategoryId: string | null = null;
+
+      if (typeof rawCategoryName === "string" && rawCategoryName.trim()) {
+        const name = rawCategoryName.trim();
+        if (name.length > 50) {
+          return data<IntentResult>(
+            { ok: false, message: "카테고리 이름은 50자 이내로 입력해주세요." },
+            { status: 400 }
+          );
+        }
+
+        const category = await getOrCreateCategoryForUser(prisma, {
+          userId: auth.userId,
+          name,
+        });
+        resolvedCategoryId = category.id;
+      } else if (typeof rawCategoryId === "string") {
+        if (!rawCategoryId) {
+          resolvedCategoryId = null;
+        } else {
+          if (!isUuidish(rawCategoryId)) {
+            return data<IntentResult>(
+              { ok: false, message: "카테고리 값이 올바르지 않습니다." },
+              { status: 400 }
+            );
+          }
+
+          const category = await prisma.categories.findFirst({
+            where: { id: rawCategoryId, user_id: auth.userId },
+            select: { id: true },
+          });
+          if (!category) {
+            return data<IntentResult>(
+              { ok: false, message: "카테고리를 찾을 수 없습니다." },
+              { status: 404 }
+            );
+          }
+          resolvedCategoryId = category.id;
+        }
+      }
+
       const result = await updateLinkMetadataForUser(prisma, {
         userId: auth.userId,
         linkId,
         title: title.value,
         description: description.value,
+        categoryId: resolvedCategoryId,
       });
 
       if (!result.updated) {
@@ -658,6 +739,14 @@ export default function UserRoute() {
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const categoryNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const category of categories) {
+      map.set(category.id, category.name);
+    }
+    return map;
+  }, [categories]);
 
   const activeTab: LinkView =
     searchParams.get("tab") === "favorites" ? "favorites" : "all";
@@ -823,7 +912,16 @@ export default function UserRoute() {
         ) : (
           <div className="gap-3 flex flex-col">
             {filteredLinks.map((link) => (
-              <LinkItemCard key={link.id} link={link} />
+              <LinkItemCard
+                key={link.id}
+                link={link}
+                categories={categories}
+                categoryName={
+                  link.category_id
+                    ? categoryNameById.get(link.category_id) ?? null
+                    : null
+                }
+              />
             ))}
           </div>
         )}

@@ -132,6 +132,7 @@ describe("links.server", () => {
       linkId: "link_1",
       title: "Updated",
       description: "New description",
+      categoryId: "cat_1",
     });
 
     expect(result).toEqual({ updated: true });
@@ -140,6 +141,7 @@ describe("links.server", () => {
       data: {
         title: "Updated",
         description: "New description",
+        category_id: "cat_1",
         updated_at: expect.any(Date),
       },
     });
