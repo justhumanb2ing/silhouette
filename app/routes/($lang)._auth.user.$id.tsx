@@ -4,6 +4,7 @@ import { ExternalLink, Pencil, Star, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   Form,
+  type ShouldRevalidateFunctionArgs,
   data,
   redirect,
   useActionData,
@@ -59,6 +60,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -71,6 +73,10 @@ import {
   setLinkFavoriteForUser,
   updateLinkMetadataForUser,
 } from "../../service/links/links.server";
+import {
+  getOrCreateCategoryForUser,
+  listCategoriesForUser,
+} from "../../service/categories/categories.server";
 import { getPrisma } from "@/lib/get-prisma";
 
 type ActionData = {
@@ -343,13 +349,14 @@ export async function loader(args: Route.LoaderArgs) {
   if (!auth.userId || args.params.id !== auth.userId) {
     throw new Response("Forbidden", { status: 403 });
   }
-
+  
   const prisma = await getPrisma();
   const links = await listLinksForUser(prisma, auth.userId);
-  return data({ links });
+  const categories = await listCategoriesForUser(prisma, auth.userId);
+  return data({ links, categories });
 }
 
-export function shouldRevalidate(args: Route.ShouldRevalidateArgs) {
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
   const samePath = args.currentUrl.pathname === args.nextUrl.pathname;
   if (!samePath) {
     return args.defaultShouldRevalidate;
@@ -358,6 +365,7 @@ export function shouldRevalidate(args: Route.ShouldRevalidateArgs) {
   const stripTab = (url: URL) => {
     const params = new URLSearchParams(url.searchParams);
     params.delete("tab");
+    params.delete("category");
     return params.toString();
   };
 
@@ -552,6 +560,8 @@ export async function action(args: Route.ActionArgs) {
 
   const rawUrl = formData.get("url");
   const normalizedUrl = normalizeLinkUrl(formData.get("url"));
+  const rawCategoryId = formData.get("categoryId");
+  const rawCategoryName = formData.get("categoryName");
 
   if (!normalizedUrl.ok) {
     return data<ActionData>(
@@ -565,9 +575,57 @@ export async function action(args: Route.ActionArgs) {
 
   try {
     const prisma = await getPrisma();
+    let resolvedCategoryId: string | null = null;
+
+    if (typeof rawCategoryName === "string" && rawCategoryName.trim()) {
+      const name = rawCategoryName.trim();
+      if (name.length > 50) {
+        return data<ActionData>(
+          {
+            fields: { url: typeof rawUrl === "string" ? rawUrl : undefined },
+            formError: "카테고리 이름은 50자 이내로 입력해주세요.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const category = await getOrCreateCategoryForUser(prisma, {
+        userId: auth.userId,
+        name,
+      });
+      resolvedCategoryId = category.id;
+    } else if (typeof rawCategoryId === "string" && rawCategoryId) {
+      if (!isUuidish(rawCategoryId)) {
+        return data<ActionData>(
+          {
+            fields: { url: typeof rawUrl === "string" ? rawUrl : undefined },
+            formError: "카테고리 값이 올바르지 않습니다.",
+          },
+          { status: 400 }
+        );
+      }
+      const category = await prisma.categories.findFirst({
+        where: { id: rawCategoryId, user_id: auth.userId },
+        select: { id: true },
+      });
+
+      if (!category) {
+        return data<ActionData>(
+          {
+            fields: { url: typeof rawUrl === "string" ? rawUrl : undefined },
+            formError: "카테고리를 찾을 수 없습니다.",
+          },
+          { status: 404 }
+        );
+      }
+
+      resolvedCategoryId = category.id;
+    }
+
     await createLinkForUser(prisma, {
       userId: auth.userId,
       url: normalizedUrl.url,
+      categoryId: resolvedCategoryId,
     });
   } catch (error) {
     Sentry.withScope((scope) => {
@@ -595,7 +653,7 @@ export async function action(args: Route.ActionArgs) {
 
 export default function UserRoute() {
   const { id } = useParams();
-  const { links } = useLoaderData<typeof loader>();
+  const { links, categories } = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
@@ -604,8 +662,12 @@ export default function UserRoute() {
   const activeTab: LinkView =
     searchParams.get("tab") === "favorites" ? "favorites" : "all";
 
-  const filteredLinks =
-    activeTab === "favorites" ? links.filter((link) => link.is_favorite) : links;
+  const activeCategoryId = searchParams.get("category");
+  const filteredLinks = links
+    .filter((link) => (activeTab === "favorites" ? link.is_favorite : true))
+    .filter((link) =>
+      activeCategoryId ? link.category_id === activeCategoryId : true
+    );
 
   const prevLinkCountRef = useRef(links.length);
 
@@ -654,6 +716,32 @@ export default function UserRoute() {
               </FieldContent>
             </Field>
 
+            <Field>
+              <FieldLabel>Category</FieldLabel>
+              <FieldContent className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <NativeSelect name="categoryId" defaultValue="">
+                    <NativeSelectOption value="">카테고리 없음</NativeSelectOption>
+                    {categories.map((category) => (
+                      <NativeSelectOption key={category.id} value={category.id}>
+                        {category.name}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                  <Input
+                    name="categoryName"
+                    type="text"
+                    placeholder="새 카테고리 이름 (선택사항)"
+                    autoComplete="off"
+                  />
+                </div>
+                <FieldDescription>
+                  기존 카테고리를 선택하거나, 새 카테고리 이름을 입력할 수 있습니다.
+                  (새 이름이 입력되면 선택값보다 우선합니다)
+                </FieldDescription>
+              </FieldContent>
+            </Field>
+
             {actionData?.formError ? (
               <div className="text-sm text-destructive" role="alert">
                 {actionData.formError}
@@ -670,25 +758,48 @@ export default function UserRoute() {
       </Card>
 
       <div className="mt-8">
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => {
-            const next = value === "favorites" ? "favorites" : "all";
-            const nextParams = new URLSearchParams(searchParams);
-            if (next === "favorites") {
-              nextParams.set("tab", "favorites");
-            } else {
-              nextParams.delete("tab");
-            }
-            setSearchParams(nextParams, { replace: true });
-          }}
-          className="mb-4"
-        >
-          <TabsList>
-            <TabsTrigger value="all">전체</TabsTrigger>
-            <TabsTrigger value="favorites">즐겨찾기</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => {
+              const next = value === "favorites" ? "favorites" : "all";
+              const nextParams = new URLSearchParams(searchParams);
+              if (next === "favorites") {
+                nextParams.set("tab", "favorites");
+              } else {
+                nextParams.delete("tab");
+              }
+              setSearchParams(nextParams, { replace: true });
+            }}
+          >
+            <TabsList>
+              <TabsTrigger value="all">전체</TabsTrigger>
+              <TabsTrigger value="favorites">즐겨찾기</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <NativeSelect
+            aria-label="카테고리 필터"
+            value={activeCategoryId ?? ""}
+            onChange={(event) => {
+              const next = event.target.value;
+              const nextParams = new URLSearchParams(searchParams);
+              if (next) {
+                nextParams.set("category", next);
+              } else {
+                nextParams.delete("category");
+              }
+              setSearchParams(nextParams, { replace: true });
+            }}
+          >
+            <NativeSelectOption value="">전체 카테고리</NativeSelectOption>
+            {categories.map((category) => (
+              <NativeSelectOption key={category.id} value={category.id}>
+                {category.name}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </div>
 
         {filteredLinks.length === 0 ? (
           <Empty>

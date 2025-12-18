@@ -29,7 +29,7 @@ describe("links.server", () => {
 
     expect(result).toEqual({ id: "link_1" });
     expect(received).toEqual({
-      data: { user_id: "user_1", url: "https://example.com/" },
+      data: { user_id: "user_1", url: "https://example.com/", category_id: null },
       select: { id: true },
     });
   });
@@ -45,6 +45,7 @@ describe("links.server", () => {
               title: "Example",
               description: "Hello",
               image_url: "https://cdn.example.com/image.png",
+              category_id: "cat_1",
               is_favorite: false,
             },
           ];
@@ -60,6 +61,7 @@ describe("links.server", () => {
         title: "Example",
         description: "Hello",
         image_url: "https://cdn.example.com/image.png",
+        category_id: "cat_1",
         is_favorite: false,
       },
     ]);

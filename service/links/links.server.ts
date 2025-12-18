@@ -7,6 +7,7 @@ export type LinkListItem = Prisma.linksGetPayload<{
     title: true;
     description: true;
     image_url: true;
+    category_id: true;
     is_favorite: true;
   };
 }>;
@@ -28,6 +29,7 @@ export async function listLinksForUser(
       title: true,
       description: true,
       image_url: true,
+      category_id: true,
       is_favorite: true,
     },
   });
@@ -39,10 +41,14 @@ export async function listLinksForUser(
  */
 export async function createLinkForUser(
   prisma: PrismaClient,
-  input: { userId: string; url: string }
+  input: { userId: string; url: string; categoryId?: string | null }
 ): Promise<{ id: string }> {
   const created = await prisma.links.create({
-    data: { user_id: input.userId, url: input.url },
+    data: {
+      user_id: input.userId,
+      url: input.url,
+      category_id: input.categoryId ?? null,
+    },
     select: { id: true },
   });
 
