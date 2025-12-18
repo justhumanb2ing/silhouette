@@ -69,7 +69,11 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { debounce } from "es-toolkit";
 
+import { useSupabaseServer } from "@/config/supabase/server";
+import { getPrisma } from "@/lib/get-prisma";
+
 import { normalizeLinkUrl } from "../../service/links/utils/normalize-link-url";
+import { fetchOgMetadataForUrl } from "../../service/links/fetch-og.server";
 import {
   createLinkForUser,
   type LinkListItem,
@@ -82,7 +86,6 @@ import {
   getOrCreateCategoryForUser,
   listCategoriesForUser,
 } from "../../service/categories/categories.server";
-import { getPrisma } from "@/lib/get-prisma";
 
 type ActionData = {
   fields?: {
@@ -97,6 +100,8 @@ type ActionData = {
 type IntentResult = { ok: true } | { ok: false; message: string };
 
 type LinkView = "all" | "favorites";
+
+type CreateLinkOgResult = Awaited<ReturnType<typeof fetchOgMetadataForUrl>>;
 
 function isUuidish(input: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -787,9 +792,66 @@ export async function action(args: Route.ActionArgs) {
       resolvedCategoryId = category.id;
     }
 
+    let ogResult: CreateLinkOgResult = {
+      ok: false,
+      message: "OG 데이터를 가져오지 못했습니다.",
+    };
+
+    try {
+      const supabase = await useSupabaseServer(args);
+      const ogFallback: CreateLinkOgResult = {
+        ok: false,
+        message: "OG 요청 시간이 초과되었습니다.",
+      };
+
+      const ogPromise: Promise<CreateLinkOgResult> = fetchOgMetadataForUrl(
+        supabase,
+        { url: normalizedUrl.url }
+      ).catch((error) => {
+        Sentry.withScope((scope) => {
+          scope.setLevel("error");
+          scope.setTag("feature", "links");
+          scope.setTag("operation", "create.fetch-og");
+          scope.setExtra("url", normalizedUrl.url);
+          Sentry.captureException(error);
+        });
+
+        return { ok: false, message: "OG 데이터를 가져오지 못했습니다." };
+      });
+
+      const timeoutPromise = new Promise<CreateLinkOgResult>((resolve) =>
+        setTimeout(() => resolve(ogFallback), 3000)
+      );
+
+      ogResult = await Promise.race([ogPromise, timeoutPromise] as const);
+
+      if (!ogResult.ok) {
+        const message = ogResult.message;
+        Sentry.withScope((scope) => {
+          scope.setLevel("warning");
+          scope.setTag("feature", "links");
+          scope.setTag("operation", "create.fetch-og");
+          scope.setExtra("url", normalizedUrl.url);
+          scope.setExtra("message", message);
+          Sentry.captureMessage("fetch-og failed");
+        });
+      }
+    } catch (error) {
+      Sentry.withScope((scope) => {
+        scope.setLevel("error");
+        scope.setTag("feature", "links");
+        scope.setTag("operation", "create.fetch-og");
+        scope.setExtra("url", normalizedUrl.url);
+        Sentry.captureException(error);
+      });
+    }
+
     await createLinkForUser(prisma, {
       userId: auth.userId,
-      url: normalizedUrl.url,
+      url: ogResult.ok ? ogResult.data.url : normalizedUrl.url,
+      title: ogResult.ok ? ogResult.data.title : null,
+      description: ogResult.ok ? ogResult.data.description : null,
+      imageUrl: ogResult.ok ? ogResult.data.imageUrl : null,
       categoryId: resolvedCategoryId,
     });
   } catch (error) {

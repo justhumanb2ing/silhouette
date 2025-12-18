@@ -57,12 +57,22 @@ export async function listLinksForUser(
  */
 export async function createLinkForUser(
   prisma: PrismaClient,
-  input: { userId: string; url: string; categoryId?: string | null }
+  input: {
+    userId: string;
+    url: string;
+    title?: string | null;
+    description?: string | null;
+    imageUrl?: string | null;
+    categoryId?: string | null;
+  }
 ): Promise<{ id: string }> {
   const created = await prisma.links.create({
     data: {
       user_id: input.userId,
       url: input.url,
+      title: input.title ?? null,
+      description: input.description ?? null,
+      image_url: input.imageUrl ?? null,
       category_id: input.categoryId ?? null,
     },
     select: { id: true },

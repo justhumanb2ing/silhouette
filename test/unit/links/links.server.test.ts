@@ -29,7 +29,14 @@ describe("links.server", () => {
 
     expect(result).toEqual({ id: "link_1" });
     expect(received).toEqual({
-      data: { user_id: "user_1", url: "https://example.com/", category_id: null },
+      data: {
+        user_id: "user_1",
+        url: "https://example.com/",
+        title: null,
+        description: null,
+        image_url: null,
+        category_id: null,
+      },
       select: { id: true },
     });
   });
