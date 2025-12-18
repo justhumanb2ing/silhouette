@@ -1,7 +1,6 @@
 import type { Route } from "./+types/($lang)._index";
 import { useIntlayer } from "react-intlayer";
 
-import { Button } from "@/components/ui/button";
 import LocaleSwitcher from "@/components/locale-switcher";
 import UserButton from "@/components/user-button";
 

@@ -8,17 +8,42 @@ datasource db {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model tasks {
-  id      Int    @id @default(autoincrement())
-  name    String
-  user_id String @default(dbgenerated("(auth.jwt() ->> 'sub'::text)"))
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model users {
   id         String   @id
   name       String
   avatar_url String?
   created_at DateTime @db.Timestamptz(6)
   updated_at DateTime @db.Timestamptz(6)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model categories {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String
+  name       String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  links      links[]
+
+  @@unique([user_id, name], map: "unique_category_per_user")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model links {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String
+  url         String
+  title       String?
+  description String?
+  image_url   String?
+  category_id String?     @db.Uuid
+  is_favorite Boolean     @default(false)
+  created_at  DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime    @default(now()) @db.Timestamptz(6)
+  categories  categories? @relation(fields: [category_id], references: [id], onUpdate: NoAction, map: "links_category_fk")
+
+  @@index([user_id, category_id], map: "idx_links_user_category")
+  @@index([user_id, created_at(sort: Desc)], map: "idx_links_user_created")
+  @@index([user_id, is_favorite], map: "idx_links_user_favorite")
 }
