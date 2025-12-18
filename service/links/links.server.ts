@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient } from "../../app/generated/prisma/client";
 
 export type LinkListItem = Prisma.linksGetPayload<{
-  select: { id: true; url: true; created_at: true };
+  select: { id: true; url: true; is_favorite: true; created_at: true };
 }>;
 
 /**
@@ -15,7 +15,7 @@ export async function listLinksForUser(
     where: { user_id: userId },
     orderBy: { created_at: "desc" },
     take: 50,
-    select: { id: true, url: true, created_at: true },
+    select: { id: true, url: true, is_favorite: true, created_at: true },
   });
 }
 
@@ -33,4 +33,20 @@ export async function createLinkForUser(
   });
 
   return { id: created.id };
+}
+
+/**
+ * 특정 링크의 즐겨찾기 여부를 설정한다.
+ * 링크 소유자(user_id)가 아닌 경우 갱신되지 않는다.
+ */
+export async function setLinkFavoriteForUser(
+  prisma: PrismaClient,
+  input: { userId: string; linkId: string; isFavorite: boolean }
+): Promise<{ updated: boolean }> {
+  const result = await prisma.links.updateMany({
+    where: { id: input.linkId, user_id: input.userId },
+    data: { is_favorite: input.isFavorite, updated_at: new Date() },
+  });
+
+  return { updated: result.count === 1 };
 }

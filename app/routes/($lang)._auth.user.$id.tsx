@@ -1,12 +1,13 @@
 import { getAuth } from "@clerk/react-router/server";
 import * as Sentry from "@sentry/react-router";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Star } from "lucide-react";
 import { useEffect, useRef } from "react";
 import {
   Form,
   data,
   redirect,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigation,
   useParams,
@@ -17,6 +18,7 @@ import type { Route } from "./+types/($lang)._auth.user.$id";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -42,7 +44,9 @@ import { Input } from "@/components/ui/input";
 import { normalizeLinkUrl } from "../../service/links/utils/normalize-link-url";
 import {
   createLinkForUser,
+  type LinkListItem,
   listLinksForUser,
+  setLinkFavoriteForUser,
 } from "../../service/links/links.server";
 import { getPrisma } from "@/lib/get-prisma";
 
@@ -55,6 +59,71 @@ type ActionData = {
   };
   formError?: string;
 };
+
+function isUuidish(input: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    input
+  );
+}
+
+function LinkItemCard({ link }: { link: LinkListItem }) {
+  const fetcher = useFetcher();
+  const pendingFavorite = fetcher.formData?.get("nextIsFavorite");
+  const optimisticIsFavorite =
+    typeof pendingFavorite === "string"
+      ? pendingFavorite === "true"
+      : link.is_favorite;
+
+  const isToggling = fetcher.state !== "idle";
+
+  return (
+    <Card size="sm">
+      <CardHeader className="gap-1">
+        <CardTitle className="text-sm font-medium break-all">
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:underline underline-offset-4"
+          >
+            {link.url}
+          </a>
+        </CardTitle>
+        <CardDescription className="font-mono">
+          {new Date(link.created_at).toLocaleString()}
+        </CardDescription>
+        <CardAction>
+          <fetcher.Form method="post">
+            <input type="hidden" name="intent" value="toggle-favorite" />
+            <input type="hidden" name="linkId" value={link.id} />
+            <input
+              type="hidden"
+              name="nextIsFavorite"
+              value={String(!optimisticIsFavorite)}
+            />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon-sm"
+              disabled={isToggling}
+              aria-label={
+                optimisticIsFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"
+              }
+            >
+              <Star
+                className={
+                  optimisticIsFavorite
+                    ? "fill-current text-amber-500"
+                    : "text-muted-foreground"
+                }
+              />
+            </Button>
+          </fetcher.Form>
+        </CardAction>
+      </CardHeader>
+    </Card>
+  );
+}
 
 export async function loader(args: Route.LoaderArgs) {
   const auth = await getAuth(args);
@@ -78,6 +147,59 @@ export async function action(args: Route.ActionArgs) {
   }
 
   const formData = await args.request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "toggle-favorite") {
+    const linkId = formData.get("linkId");
+    const nextIsFavorite = formData.get("nextIsFavorite");
+
+    if (
+      typeof linkId !== "string" ||
+      !isUuidish(linkId) ||
+      (nextIsFavorite !== "true" && nextIsFavorite !== "false")
+    ) {
+      return data(
+        { ok: false, message: "요청이 올바르지 않습니다." },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const prisma = await getPrisma();
+      const result = await setLinkFavoriteForUser(prisma, {
+        userId: auth.userId,
+        linkId,
+        isFavorite: nextIsFavorite === "true",
+      });
+
+      if (!result.updated) {
+        return data(
+          { ok: false, message: "링크를 찾을 수 없습니다." },
+          { status: 404 }
+        );
+      }
+    } catch (error) {
+      Sentry.withScope((scope) => {
+        scope.setLevel("error");
+        scope.setTag("feature", "links");
+        scope.setTag("operation", "favorite.toggle");
+        scope.setExtra("linkId", linkId);
+        Sentry.captureException(error);
+      });
+
+      return data(
+        {
+          ok: false,
+          message:
+            "즐겨찾기 변경 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        },
+        { status: 500 }
+      );
+    }
+
+    return data({ ok: true });
+  }
+
   const rawUrl = formData.get("url");
   const normalizedUrl = normalizeLinkUrl(formData.get("url"));
 
@@ -207,23 +329,7 @@ export default function UserRoute() {
         ) : (
           <div className="gap-3 flex flex-col">
             {links.map((link) => (
-              <Card key={link.id} size="sm">
-                <CardHeader className="gap-1">
-                  <CardTitle className="text-sm font-medium break-all">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="hover:underline underline-offset-4"
-                    >
-                      {link.url}
-                    </a>
-                  </CardTitle>
-                  <CardDescription className="font-mono">
-                    {new Date(link.created_at).toLocaleString()}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              <LinkItemCard key={link.id} link={link} />
             ))}
           </div>
         )}
