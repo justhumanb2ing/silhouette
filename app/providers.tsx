@@ -1,9 +1,5 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React, { useState } from "react";
-import {
-  QueryCache,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
 
 export default function Providers({
   children,
@@ -26,6 +22,7 @@ export default function Providers({
         },
       })
   );
+
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );

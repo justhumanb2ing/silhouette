@@ -14,6 +14,7 @@ import "./app.css";
 import { clerkMiddleware, rootAuthLoader } from "@clerk/react-router/server";
 import { ClerkProvider } from "@clerk/react-router";
 import { enUS } from "@clerk/localizations";
+import Providers from "./providers";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -75,11 +76,13 @@ export default function App({ loaderData }: Route.ComponentProps) {
         },
       }}
     >
-      <main className="h-dvh flex flex-col">
-        <section className="grow">
-          <Outlet />
-        </section>
-      </main>
+      <Providers>
+        <main className="h-dvh flex flex-col">
+          <section className="grow">
+            <Outlet />
+          </section>
+        </main>
+      </Providers>
     </ClerkProvider>
   );
 }
