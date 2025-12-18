@@ -1,7 +1,14 @@
 import type { Prisma, PrismaClient } from "../../app/generated/prisma/client";
 
 export type LinkListItem = Prisma.linksGetPayload<{
-  select: { id: true; url: true; is_favorite: true; created_at: true };
+  select: {
+    id: true;
+    url: true;
+    title: true;
+    description: true;
+    is_favorite: true;
+    created_at: true;
+  };
 }>;
 
 /**
@@ -15,7 +22,14 @@ export async function listLinksForUser(
     where: { user_id: userId },
     orderBy: { created_at: "desc" },
     take: 50,
-    select: { id: true, url: true, is_favorite: true, created_at: true },
+    select: {
+      id: true,
+      url: true,
+      title: true,
+      description: true,
+      is_favorite: true,
+      created_at: true,
+    },
   });
 }
 
@@ -46,6 +60,46 @@ export async function setLinkFavoriteForUser(
   const result = await prisma.links.updateMany({
     where: { id: input.linkId, user_id: input.userId },
     data: { is_favorite: input.isFavorite, updated_at: new Date() },
+  });
+
+  return { updated: result.count === 1 };
+}
+
+/**
+ * 특정 링크를 삭제한다.
+ * 링크 소유자(user_id)가 아닌 경우 삭제되지 않는다.
+ */
+export async function deleteLinkForUser(
+  prisma: PrismaClient,
+  input: { userId: string; linkId: string }
+): Promise<{ deleted: boolean }> {
+  const result = await prisma.links.deleteMany({
+    where: { id: input.linkId, user_id: input.userId },
+  });
+
+  return { deleted: result.count === 1 };
+}
+
+/**
+ * 특정 링크의 메타데이터(title/description)를 수정한다.
+ * 링크 소유자(user_id)가 아닌 경우 갱신되지 않는다.
+ */
+export async function updateLinkMetadataForUser(
+  prisma: PrismaClient,
+  input: {
+    userId: string;
+    linkId: string;
+    title: string | null;
+    description: string | null;
+  }
+): Promise<{ updated: boolean }> {
+  const result = await prisma.links.updateMany({
+    where: { id: input.linkId, user_id: input.userId },
+    data: {
+      title: input.title,
+      description: input.description,
+      updated_at: new Date(),
+    },
   });
 
   return { updated: result.count === 1 };
