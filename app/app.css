@@ -99,7 +99,6 @@
 
   html,
   body {
-    @apply bg-zinc-950 text-zinc-100;
     font-family: var(--font-pretendard);
 
     @media (prefers-color-scheme: dark) {

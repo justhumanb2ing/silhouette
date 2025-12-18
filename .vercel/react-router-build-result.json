@@ -12,8 +12,9 @@
     "routeIdToServerBundleId": {
       "root": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/($lang)._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
-      "routes/($lang)._auth.sign-in._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
-      "routes/($lang)._auth.sign-up._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+      "routes/($lang)._auth.user.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/($lang)._auth.sign-in": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/($lang)._auth.sign-up": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
     },
     "routes": {
       "root": {
@@ -44,28 +45,33 @@
         "file": "app/routes/($lang)._auth.tsx",
         "config": {}
       },
-      "routes/($lang)._auth.sign-in._index": {
-        "id": "routes/($lang)._auth.sign-in._index",
+      "routes/($lang)._auth.user.$id": {
+        "id": "routes/($lang)._auth.user.$id",
         "parentId": "routes/($lang)._auth",
-        "file": "app/routes/($lang)._auth.sign-in._index.tsx",
-        "path": "sign-in",
-        "index": true,
+        "file": "app/routes/($lang)._auth.user.$id.tsx",
+        "path": "user/:id",
         "config": {}
       },
-      "routes/($lang)._auth.sign-up._index": {
-        "id": "routes/($lang)._auth.sign-up._index",
+      "routes/($lang)._auth.sign-in": {
+        "id": "routes/($lang)._auth.sign-in",
         "parentId": "routes/($lang)._auth",
-        "file": "app/routes/($lang)._auth.sign-up._index.tsx",
+        "file": "app/routes/($lang)._auth.sign-in.tsx",
+        "path": "sign-in",
+        "config": {}
+      },
+      "routes/($lang)._auth.sign-up": {
+        "id": "routes/($lang)._auth.sign-up",
+        "parentId": "routes/($lang)._auth",
+        "file": "app/routes/($lang)._auth.sign-up.tsx",
         "path": "sign-up",
-        "index": true,
         "config": {}
       }
     }
   },
   "reactRouterConfig": {
-    "appDirectory": "/Users/zentechie/Documents/Github_Repo/silhouette/app",
+    "appDirectory": "/Users/zentechie/Documents/KINMONGSANG/silhouette/app",
     "basename": "/",
-    "buildDirectory": "/Users/zentechie/Documents/Github_Repo/silhouette/build",
+    "buildDirectory": "/Users/zentechie/Documents/KINMONGSANG/silhouette/build",
     "future": {
       "unstable_optimizeDeps": false,
       "unstable_subResourceIntegrity": false,
@@ -96,19 +102,23 @@
         "parentId": "routes/($lang)",
         "file": "routes/($lang)._auth.tsx"
       },
-      "routes/($lang)._auth.sign-in._index": {
-        "id": "routes/($lang)._auth.sign-in._index",
+      "routes/($lang)._auth.user.$id": {
+        "id": "routes/($lang)._auth.user.$id",
         "parentId": "routes/($lang)._auth",
-        "file": "routes/($lang)._auth.sign-in._index.tsx",
-        "path": "sign-in",
-        "index": true
+        "file": "routes/($lang)._auth.user.$id.tsx",
+        "path": "user/:id"
       },
-      "routes/($lang)._auth.sign-up._index": {
-        "id": "routes/($lang)._auth.sign-up._index",
+      "routes/($lang)._auth.sign-in": {
+        "id": "routes/($lang)._auth.sign-in",
         "parentId": "routes/($lang)._auth",
-        "file": "routes/($lang)._auth.sign-up._index.tsx",
-        "path": "sign-up",
-        "index": true
+        "file": "routes/($lang)._auth.sign-in.tsx",
+        "path": "sign-in"
+      },
+      "routes/($lang)._auth.sign-up": {
+        "id": "routes/($lang)._auth.sign-up",
+        "parentId": "routes/($lang)._auth",
+        "file": "routes/($lang)._auth.sign-up.tsx",
+        "path": "sign-up"
       }
     },
     "routeDiscovery": {
@@ -139,16 +149,19 @@
                 "file": "routes/($lang)._auth.tsx",
                 "children": [
                   {
-                    "id": "routes/($lang)._auth.sign-in._index",
-                    "file": "routes/($lang)._auth.sign-in._index.tsx",
-                    "path": "sign-in",
-                    "index": true
+                    "id": "routes/($lang)._auth.user.$id",
+                    "file": "routes/($lang)._auth.user.$id.tsx",
+                    "path": "user/:id"
                   },
                   {
-                    "id": "routes/($lang)._auth.sign-up._index",
-                    "file": "routes/($lang)._auth.sign-up._index.tsx",
-                    "path": "sign-up",
-                    "index": true
+                    "id": "routes/($lang)._auth.sign-in",
+                    "file": "routes/($lang)._auth.sign-in.tsx",
+                    "path": "sign-in"
+                  },
+                  {
+                    "id": "routes/($lang)._auth.sign-up",
+                    "file": "routes/($lang)._auth.sign-up.tsx",
+                    "path": "sign-up"
                   }
                 ]
               }
@@ -176,16 +189,19 @@
                 "file": "routes/($lang)._auth.tsx",
                 "children": [
                   {
-                    "id": "routes/($lang)._auth.sign-in._index",
-                    "file": "routes/($lang)._auth.sign-in._index.tsx",
-                    "path": "sign-in",
-                    "index": true
+                    "id": "routes/($lang)._auth.user.$id",
+                    "file": "routes/($lang)._auth.user.$id.tsx",
+                    "path": "user/:id"
                   },
                   {
-                    "id": "routes/($lang)._auth.sign-up._index",
-                    "file": "routes/($lang)._auth.sign-up._index.tsx",
-                    "path": "sign-up",
-                    "index": true
+                    "id": "routes/($lang)._auth.sign-in",
+                    "file": "routes/($lang)._auth.sign-in.tsx",
+                    "path": "sign-in"
+                  },
+                  {
+                    "id": "routes/($lang)._auth.sign-up",
+                    "file": "routes/($lang)._auth.sign-up.tsx",
+                    "path": "sign-up"
                   }
                 ]
               }

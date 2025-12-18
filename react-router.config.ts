@@ -11,7 +11,7 @@ export default {
 
   future: {
     // Keep middleware disabled until the Vercel adapter supplies a RouterContextProvider load context.
-    v8_middleware: false,
+    v8_middleware: true,
   },
 
   buildEnd: async (

@@ -3,6 +3,9 @@
 .env
 /node_modules/
 
+# Local temp dir for sandboxed tools
+.tmp/
+
 # React Router
 /.react-router/
 /build/
