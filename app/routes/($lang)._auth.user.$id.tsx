@@ -60,7 +60,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -147,16 +150,22 @@ function LinkItemCard({
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState(link.title ?? "");
-  const [draftDescription, setDraftDescription] = useState(link.description ?? "");
-  const [draftCategoryId, setDraftCategoryId] = useState(link.category_id ?? "");
-  const [draftCategoryName, setDraftCategoryName] = useState("");
+  const [draftDescription, setDraftDescription] = useState(
+    link.description ?? ""
+  );
+  const [draftCategoryId, setDraftCategoryId] = useState(
+    link.category_id ?? ""
+  );
+  const [isNewCategoryMode, setIsNewCategoryMode] = useState(false);
+  const [draftNewCategoryName, setDraftNewCategoryName] = useState("");
 
   useEffect(() => {
     if (isEditOpen) {
       setDraftTitle(link.title ?? "");
       setDraftDescription(link.description ?? "");
       setDraftCategoryId(link.category_id ?? "");
-      setDraftCategoryName("");
+      setIsNewCategoryMode(false);
+      setDraftNewCategoryName("");
     }
   }, [isEditOpen, link.category_id, link.description, link.title]);
 
@@ -251,52 +260,90 @@ function LinkItemCard({
                   </DialogDescription>
                 </DialogHeader>
 
-	                <updateFetcher.Form method="post" className="flex flex-col gap-3">
-	                  <input type="hidden" name="intent" value="update-link" />
-	                  <input type="hidden" name="linkId" value={link.id} />
-	                  <Input
-	                    type="text"
-	                    name="title"
-	                    placeholder="Title"
-	                    value={draftTitle}
-	                    onChange={(event) => setDraftTitle(event.target.value)}
-	                    autoComplete="off"
-	                    autoFocus
-	                  />
-	                  <Textarea
-	                    name="description"
-	                    placeholder="Description"
-	                    value={draftDescription}
-	                    onChange={(event) => setDraftDescription(event.target.value)}
-	                  />
-	                  <div className="flex flex-col gap-2 sm:flex-row">
-	                    <NativeSelect
-	                      name="categoryId"
-	                      value={draftCategoryId}
-	                      onChange={(event) => setDraftCategoryId(event.target.value)}
-	                    >
-	                      <NativeSelectOption value="">카테고리 없음</NativeSelectOption>
-	                      {categories.map((category) => (
-	                        <NativeSelectOption key={category.id} value={category.id}>
-	                          {category.name}
-	                        </NativeSelectOption>
-	                      ))}
-	                    </NativeSelect>
-	                    <Input
-	                      name="categoryName"
-	                      type="text"
-	                      placeholder="새 카테고리 이름 (선택사항)"
-	                      autoComplete="off"
-	                      value={draftCategoryName}
-	                      onChange={(event) => setDraftCategoryName(event.target.value)}
-	                    />
-	                  </div>
-	
-	                  {updateFetcher.data && !updateFetcher.data.ok ? (
-	                    <div className="text-sm text-destructive" role="alert">
-	                      {updateFetcher.data.message}
-	                    </div>
-	                  ) : null}
+                <updateFetcher.Form
+                  method="post"
+                  className="flex flex-col gap-3"
+                >
+                  <input type="hidden" name="intent" value="update-link" />
+                  <input type="hidden" name="linkId" value={link.id} />
+                  <input
+                    type="hidden"
+                    name="categoryMode"
+                    value={isNewCategoryMode ? "new" : "select"}
+                  />
+                  <Input
+                    type="text"
+                    name="title"
+                    placeholder="Title"
+                    value={draftTitle}
+                    onChange={(event) => setDraftTitle(event.target.value)}
+                    autoComplete="off"
+                    autoFocus
+                  />
+                  <Textarea
+                    name="description"
+                    placeholder="Description"
+                    value={draftDescription}
+                    onChange={(event) =>
+                      setDraftDescription(event.target.value)
+                    }
+                  />
+
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <NativeSelect
+                      name="categoryId"
+                      value={draftCategoryId}
+                      disabled={isNewCategoryMode}
+                      onChange={(event) =>
+                        setDraftCategoryId(event.target.value)
+                      }
+                    >
+                      <NativeSelectOption value="">
+                        카테고리 없음
+                      </NativeSelectOption>
+                      {categories.map((category) => (
+                        <NativeSelectOption
+                          key={category.id}
+                          value={category.id}
+                        >
+                          {category.name}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size={"sm"}
+                      className={"rounded-md text-xs"}
+                      onClick={() => {
+                        setIsNewCategoryMode((prev) => !prev);
+                        setDraftNewCategoryName("");
+                      }}
+                    >
+                      {isNewCategoryMode ? "취소" : "+ 새 카테고리"}
+                    </Button>
+                  </div>
+
+                  {isNewCategoryMode ? (
+                    <Input
+                      name="categoryName"
+                      type="text"
+                      placeholder="새 카테고리 이름"
+                      autoComplete="off"
+                      value={draftNewCategoryName}
+                      onChange={(event) =>
+                        setDraftNewCategoryName(event.target.value)
+                      }
+                      required
+                    />
+                  ) : null}
+
+                  {updateFetcher.data && !updateFetcher.data.ok ? (
+                    <div className="text-sm text-destructive" role="alert">
+                      {updateFetcher.data.message}
+                    </div>
+                  ) : null}
 
                   <DialogFooter>
                     <Button
@@ -307,7 +354,10 @@ function LinkItemCard({
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={updateFetcher.state !== "idle"}>
+                    <Button
+                      type="submit"
+                      disabled={updateFetcher.state !== "idle"}
+                    >
                       {updateFetcher.state !== "idle" ? "Saving..." : "Save"}
                     </Button>
                   </DialogFooter>
@@ -354,7 +404,9 @@ function LinkItemCard({
                       variant="destructive"
                       disabled={deleteFetcher.state !== "idle"}
                     >
-                      {deleteFetcher.state !== "idle" ? "Deleting..." : "Delete"}
+                      {deleteFetcher.state !== "idle"
+                        ? "Deleting..."
+                        : "Delete"}
                     </Button>
                   </deleteFetcher.Form>
                 </AlertDialogFooter>
@@ -386,7 +438,7 @@ export async function loader(args: Route.LoaderArgs) {
   if (!auth.userId || args.params.id !== auth.userId) {
     throw new Response("Forbidden", { status: 403 });
   }
-  
+
   const prisma = await getPrisma();
   const links = await listLinksForUser(prisma, auth.userId);
   const categories = await listCategoriesForUser(prisma, auth.userId);
@@ -489,7 +541,10 @@ export async function action(args: Route.ActionArgs) {
 
     try {
       const prisma = await getPrisma();
-      const result = await deleteLinkForUser(prisma, { userId: auth.userId, linkId });
+      const result = await deleteLinkForUser(prisma, {
+        userId: auth.userId,
+        linkId,
+      });
 
       if (!result.deleted) {
         return data<IntentResult>(
@@ -525,6 +580,7 @@ export async function action(args: Route.ActionArgs) {
     const rawDescription = formData.get("description");
     const rawCategoryId = formData.get("categoryId");
     const rawCategoryName = formData.get("categoryName");
+    const categoryMode = formData.get("categoryMode");
 
     if (typeof linkId !== "string" || !isUuidish(linkId)) {
       return data<IntentResult>(
@@ -559,7 +615,14 @@ export async function action(args: Route.ActionArgs) {
       const prisma = await getPrisma();
       let resolvedCategoryId: string | null = null;
 
-      if (typeof rawCategoryName === "string" && rawCategoryName.trim()) {
+      if (categoryMode === "new") {
+        if (typeof rawCategoryName !== "string" || !rawCategoryName.trim()) {
+          return data<IntentResult>(
+            { ok: false, message: "새 카테고리 이름을 입력해주세요." },
+            { status: 400 }
+          );
+        }
+
         const name = rawCategoryName.trim();
         if (name.length > 50) {
           return data<IntentResult>(
@@ -573,28 +636,30 @@ export async function action(args: Route.ActionArgs) {
           name,
         });
         resolvedCategoryId = category.id;
-      } else if (typeof rawCategoryId === "string") {
-        if (!rawCategoryId) {
-          resolvedCategoryId = null;
-        } else {
-          if (!isUuidish(rawCategoryId)) {
-            return data<IntentResult>(
-              { ok: false, message: "카테고리 값이 올바르지 않습니다." },
-              { status: 400 }
-            );
-          }
+      } else {
+        if (typeof rawCategoryId === "string") {
+          if (!rawCategoryId) {
+            resolvedCategoryId = null;
+          } else {
+            if (!isUuidish(rawCategoryId)) {
+              return data<IntentResult>(
+                { ok: false, message: "카테고리 값이 올바르지 않습니다." },
+                { status: 400 }
+              );
+            }
 
-          const category = await prisma.categories.findFirst({
-            where: { id: rawCategoryId, user_id: auth.userId },
-            select: { id: true },
-          });
-          if (!category) {
-            return data<IntentResult>(
-              { ok: false, message: "카테고리를 찾을 수 없습니다." },
-              { status: 404 }
-            );
+            const category = await prisma.categories.findFirst({
+              where: { id: rawCategoryId, user_id: auth.userId },
+              select: { id: true },
+            });
+            if (!category) {
+              return data<IntentResult>(
+                { ok: false, message: "카테고리를 찾을 수 없습니다." },
+                { status: 404 }
+              );
+            }
+            resolvedCategoryId = category.id;
           }
-          resolvedCategoryId = category.id;
         }
       }
 
@@ -618,7 +683,10 @@ export async function action(args: Route.ActionArgs) {
         scope.setTag("feature", "links");
         scope.setTag("operation", "update");
         scope.setExtra("linkId", linkId);
-        scope.setExtra("titleLength", typeof rawTitle === "string" ? rawTitle.length : null);
+        scope.setExtra(
+          "titleLength",
+          typeof rawTitle === "string" ? rawTitle.length : null
+        );
         scope.setExtra(
           "descriptionLength",
           typeof rawDescription === "string" ? rawDescription.length : null
@@ -643,6 +711,7 @@ export async function action(args: Route.ActionArgs) {
   const normalizedUrl = normalizeLinkUrl(formData.get("url"));
   const rawCategoryId = formData.get("categoryId");
   const rawCategoryName = formData.get("categoryName");
+  const categoryMode = formData.get("categoryMode");
 
   if (!normalizedUrl.ok) {
     return data<ActionData>(
@@ -658,7 +727,17 @@ export async function action(args: Route.ActionArgs) {
     const prisma = await getPrisma();
     let resolvedCategoryId: string | null = null;
 
-    if (typeof rawCategoryName === "string" && rawCategoryName.trim()) {
+    if (categoryMode === "new") {
+      if (typeof rawCategoryName !== "string" || !rawCategoryName.trim()) {
+        return data<ActionData>(
+          {
+            fields: { url: typeof rawUrl === "string" ? rawUrl : undefined },
+            formError: "새 카테고리 이름을 입력해주세요.",
+          },
+          { status: 400 }
+        );
+      }
+
       const name = rawCategoryName.trim();
       if (name.length > 50) {
         return data<ActionData>(
@@ -739,6 +818,8 @@ export default function UserRoute() {
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -808,25 +889,53 @@ export default function UserRoute() {
             <Field>
               <FieldLabel>Category</FieldLabel>
               <FieldContent className="flex flex-col gap-2">
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <NativeSelect name="categoryId" defaultValue="">
-                    <NativeSelectOption value="">카테고리 없음</NativeSelectOption>
+                <input
+                  type="hidden"
+                  name="categoryMode"
+                  value={isCreatingNewCategory ? "new" : "select"}
+                />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <NativeSelect
+                    name="categoryId"
+                    defaultValue=""
+                    disabled={isCreatingNewCategory}
+                  >
+                    <NativeSelectOption value="">
+                      카테고리 없음
+                    </NativeSelectOption>
                     {categories.map((category) => (
                       <NativeSelectOption key={category.id} value={category.id}>
                         {category.name}
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size={"sm"}
+                    className={"rounded-md text-xs"}
+                    onClick={() => {
+                      setIsCreatingNewCategory((prev) => !prev);
+                      setNewCategoryName("");
+                    }}
+                  >
+                    {isCreatingNewCategory ? "취소" : "+ 새 카테고리"}
+                  </Button>
+                </div>
+                {isCreatingNewCategory ? (
                   <Input
                     name="categoryName"
                     type="text"
-                    placeholder="새 카테고리 이름 (선택사항)"
+                    placeholder="새 카테고리 이름"
                     autoComplete="off"
+                    value={newCategoryName}
+                    onChange={(event) => setNewCategoryName(event.target.value)}
+                    required
                   />
-                </div>
+                ) : null}
                 <FieldDescription>
-                  기존 카테고리를 선택하거나, 새 카테고리 이름을 입력할 수 있습니다.
-                  (새 이름이 입력되면 선택값보다 우선합니다)
+                  기본은 기존 카테고리 선택이며, 새 카테고리 추가는 버튼을
+                  눌렀을 때만 가능합니다.
                 </FieldDescription>
               </FieldContent>
             </Field>
@@ -918,7 +1027,7 @@ export default function UserRoute() {
                 categories={categories}
                 categoryName={
                   link.category_id
-                    ? categoryNameById.get(link.category_id) ?? null
+                    ? (categoryNameById.get(link.category_id) ?? null)
                     : null
                 }
               />
