@@ -75,7 +75,7 @@
     "future": {
       "unstable_optimizeDeps": false,
       "unstable_subResourceIntegrity": false,
-      "v8_middleware": false,
+      "v8_middleware": true,
       "v8_splitRouteModules": false,
       "v8_viteEnvironmentApi": false
     },

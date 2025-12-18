@@ -2,6 +2,7 @@ import { getAuth } from "@clerk/react-router/server";
 import * as Sentry from "@sentry/react-router";
 import { ExternalLink } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+import { useIntlayer } from "react-intlayer";
 import {
   type ShouldRevalidateFunctionArgs,
   data,
@@ -538,6 +539,7 @@ export default function UserRoute() {
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const [searchParams] = useSearchParams();
+  const { empty } = useIntlayer("links");
 
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -590,19 +592,19 @@ export default function UserRoute() {
               </EmptyMedia>
               <EmptyTitle>
                 {activeTab === "favorites"
-                  ? "즐겨찾기한 링크가 없습니다"
-                  : "저장된 링크가 없습니다"}
+                  ? empty.title.favorites
+                  : empty.title.all}
               </EmptyTitle>
               <EmptyDescription>
                 {activeTab === "favorites"
-                  ? "링크를 즐겨찾기하면 여기에 표시됩니다."
-                  : "링크를 저장하면 여기에 표시됩니다."}
+                  ? empty.description.favorites
+                  : empty.description.all}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent />
           </Empty>
         ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
             {filteredLinks.map((link) => (
               <LinkItemCard
                 key={link.id}

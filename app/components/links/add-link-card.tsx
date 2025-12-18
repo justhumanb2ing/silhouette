@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useState } from "react";
 import { Form } from "react-router";
+import { useIntlayer } from "react-intlayer";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,11 @@ type AddLinkCardProps = {
 
 export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
   function AddLinkCard({ userId, categories, actionData, isSubmitting }, ref) {
+    const {
+      common,
+      addLink: { trigger, title, fields, category, newCategory },
+    } = useIntlayer("links");
+
     const hasErrors = Boolean(
       actionData?.fieldErrors?.url || actionData?.formError
     );
@@ -66,7 +72,7 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           <Button className="w-full" size="lg">
-            Add Link
+            {trigger}
           </Button>
         </DrawerTrigger>
 
@@ -75,13 +81,12 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
             <Form ref={ref} method="post" className="flex flex-col gap-4">
               <DrawerHeader className="pb-2 md:text-left">
                 <DrawerTitle className="font-medium text-xl">
-                  Add Link
+                  {title}
                 </DrawerTitle>
-                <DrawerDescription></DrawerDescription>
               </DrawerHeader>
 
               <Field>
-                <FieldLabel htmlFor="url">URL</FieldLabel>
+                <FieldLabel htmlFor="url">{fields.urlLabel}</FieldLabel>
                 <FieldContent>
                   <Input
                     id="url"
@@ -94,13 +99,12 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
                     required
                     autoFocus
                   />
-                  <FieldDescription></FieldDescription>
                   <FieldError>{actionData?.fieldErrors?.url}</FieldError>
                 </FieldContent>
               </Field>
 
               <Field>
-                <FieldLabel>Category</FieldLabel>
+                <FieldLabel>{fields.categoryLabel}</FieldLabel>
                 <FieldContent className="flex flex-col gap-2">
                   <input
                     type="hidden"
@@ -114,7 +118,7 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
                       disabled={isCreatingNewCategory}
                     >
                       <NativeSelectOption value="">
-                        카테고리 없음
+                        {category.none}
                       </NativeSelectOption>
                       {categories.map((category) => (
                         <NativeSelectOption
@@ -135,14 +139,16 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
                         setNewCategoryName("");
                       }}
                     >
-                      {isCreatingNewCategory ? "취소" : "+ 새 카테고리"}
+                      {isCreatingNewCategory
+                        ? newCategory.cancel
+                        : newCategory.add}
                     </Button>
                   </div>
                   {isCreatingNewCategory ? (
                     <Input
                       name="categoryName"
                       type="text"
-                      placeholder="새 카테고리 이름"
+                      placeholder={newCategory.placeholder.value}
                       autoComplete="off"
                       value={newCategoryName}
                       onChange={(event) =>
@@ -151,7 +157,6 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
                       required
                     />
                   ) : null}
-                  <FieldDescription></FieldDescription>
                 </FieldContent>
               </Field>
 
@@ -169,7 +174,7 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
                       variant="ghost"
                       disabled={isSubmitting}
                     >
-                      Close
+                      {common.close}
                     </Button>
                   </DrawerClose>
                   <Button
@@ -177,7 +182,7 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
                     disabled={isSubmitting}
                     className="flex-1"
                   >
-                    {isSubmitting ? "Saving..." : "Save"}
+                    {isSubmitting ? common.saving : common.save}
                   </Button>
                 </div>
               </DrawerFooter>

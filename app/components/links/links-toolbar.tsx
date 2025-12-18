@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
+import { useIntlayer } from "react-intlayer";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +15,12 @@ type LinkView = "all" | "favorites";
 
 type CategoryListItem = { id: string; name: string };
 
-export function LinksToolbar({ categories }: { categories: CategoryListItem[] }) {
+export function LinksToolbar({
+  categories,
+}: {
+  categories: CategoryListItem[];
+}) {
+  const { toolbar } = useIntlayer("links");
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
   const searchParamsRef = useRef(searchParams);
@@ -55,7 +61,7 @@ export function LinksToolbar({ categories }: { categories: CategoryListItem[] })
   return (
     <div className="mb-4 flex flex-col gap-3">
       <Input
-        placeholder="제목 또는 링크로 검색"
+        placeholder={toolbar.searchPlaceholder.value}
         value={searchInput}
         onChange={(event) => {
           const next = event.target.value;
@@ -70,7 +76,7 @@ export function LinksToolbar({ categories }: { categories: CategoryListItem[] })
         }}
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex gap-3 flex-row items-center justify-between">
         <Tabs
           value={activeTab}
           onValueChange={(value) => {
@@ -85,13 +91,15 @@ export function LinksToolbar({ categories }: { categories: CategoryListItem[] })
           }}
         >
           <TabsList>
-            <TabsTrigger value="all">전체</TabsTrigger>
-            <TabsTrigger value="favorites">즐겨찾기</TabsTrigger>
+            <TabsTrigger value="all">{toolbar.tabs.all}</TabsTrigger>
+            <TabsTrigger value="favorites">
+              {toolbar.tabs.favorites}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         <NativeSelect
-          aria-label="카테고리 필터"
+          aria-label={toolbar.categoryFilterAriaLabel.value}
           value={activeCategoryId ?? ""}
           onChange={(event) => {
             const next = event.target.value;
@@ -104,7 +112,9 @@ export function LinksToolbar({ categories }: { categories: CategoryListItem[] })
             setSearchParams(nextParams, { replace: true });
           }}
         >
-          <NativeSelectOption value="">전체 카테고리</NativeSelectOption>
+          <NativeSelectOption value="">
+            {toolbar.allCategories}
+          </NativeSelectOption>
           {categories.map((category) => (
             <NativeSelectOption key={category.id} value={category.id}>
               {category.name}

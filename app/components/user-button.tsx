@@ -12,12 +12,9 @@ export default function UserButton() {
   const {
     layout: {
       auth: { signIn, signUp },
-      logo,
     },
-    hero: { subtitle, primaryCta, secondaryCta },
-    features,
-    footer,
   } = useIntlayer("landing-page");
+  const { profile, signOut: signOutLabel } = useIntlayer("user-button");
 
   // Grab the `isLoaded` and `user` from useUser()
   const { isLoaded, user, isSignedIn } = useUser();
@@ -37,9 +34,9 @@ export default function UserButton() {
           className="object-cover w-full h-full"
         />
       </Button>
-      <LocalizedLink to={`/user/${user.id}`}>프로필</LocalizedLink>
+      <LocalizedLink to={`/user/${user.id}`}>{profile}</LocalizedLink>
       <Button variant={"ghost"} onClick={() => signOut()}>
-        Sign Out{" "}
+        {signOutLabel}
       </Button>
       <Button
         variant="ghost"

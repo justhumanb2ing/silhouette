@@ -1,6 +1,7 @@
 import { ExternalLink, Pencil, Star, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
+import { useIntlayer } from "react-intlayer";
 
 import { Button } from "@/components/ui/button";
 import { Item } from "@/components/ui/item";
@@ -36,12 +37,12 @@ type IntentResult = { ok: true } | { ok: false; message: string };
 
 type CategoryListItem = { id: string; name: string };
 
-function getUrlLabel(url: string) {
+function getUrlHostname(url: string) {
   try {
     const hostname = new URL(url).hostname;
     return hostname.replace(/^www\./, "");
   } catch {
-    return "링크";
+    return null;
   }
 }
 
@@ -54,6 +55,7 @@ export function LinkItemCard({
   categories: CategoryListItem[];
   categoryName: string | null;
 }) {
+  const { common, item } = useIntlayer("links");
   const favoriteFetcher = useFetcher<IntentResult>();
   const updateFetcher = useFetcher<IntentResult>();
   const deleteFetcher = useFetcher<IntentResult>();
@@ -96,10 +98,12 @@ export function LinkItemCard({
     updateFetcher.state !== "idle" ||
     deleteFetcher.state !== "idle";
 
-  const displayTitle = link.title?.trim() ? link.title : getUrlLabel(link.url);
+  const displayTitle = link.title?.trim()
+    ? link.title
+    : (getUrlHostname(link.url) ?? item.fallbackTitle);
   const displayDescription = link.description?.trim()
     ? link.description
-    : "설명이 없습니다.";
+    : item.noDescription;
 
   return (
     <Item
@@ -112,12 +116,12 @@ export function LinkItemCard({
           target="_blank"
           rel="noreferrer"
           className="block overflow-hidden rounded-xl"
-          aria-label="링크 열기"
+          aria-label={item.aria.open.value}
         >
           {link.image_url ? (
             <img
               src={link.image_url}
-              alt={displayTitle}
+              alt={link.title ?? link.url}
               loading="lazy"
               decoding="async"
               className="h-40 w-full object-cover"
@@ -144,7 +148,9 @@ export function LinkItemCard({
               size="icon-sm"
               disabled={isBusy}
               aria-label={
-                optimisticIsFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"
+                optimisticIsFavorite
+                  ? item.aria.favoriteRemove.value
+                  : item.aria.favoriteAdd.value
               }
             >
               <Star
@@ -164,7 +170,7 @@ export function LinkItemCard({
                   variant="ghost"
                   size="icon-sm"
                   disabled={isBusy}
-                  aria-label="링크 수정"
+                  aria-label={item.aria.edit.value}
                 >
                   <Pencil className="text-muted-foreground" />
                 </Button>
@@ -172,9 +178,9 @@ export function LinkItemCard({
             />
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>링크 수정</DialogTitle>
+                <DialogTitle>{item.editDialog.title}</DialogTitle>
                 <DialogDescription>
-                  링크의 제목과 설명을 수정합니다.
+                  {item.editDialog.description}
                 </DialogDescription>
               </DialogHeader>
 
@@ -189,7 +195,7 @@ export function LinkItemCard({
                 <Input
                   type="text"
                   name="title"
-                  placeholder="Title"
+                  placeholder={item.editDialog.placeholders.title.value}
                   value={draftTitle}
                   onChange={(event) => setDraftTitle(event.target.value)}
                   autoComplete="off"
@@ -197,7 +203,7 @@ export function LinkItemCard({
                 />
                 <Textarea
                   name="description"
-                  placeholder="Description"
+                  placeholder={item.editDialog.placeholders.description.value}
                   value={draftDescription}
                   onChange={(event) => setDraftDescription(event.target.value)}
                 />
@@ -210,7 +216,7 @@ export function LinkItemCard({
                     onChange={(event) => setDraftCategoryId(event.target.value)}
                   >
                     <NativeSelectOption value="">
-                      카테고리 없음
+                      {item.category.none}
                     </NativeSelectOption>
                     {categories.map((category) => (
                       <NativeSelectOption key={category.id} value={category.id}>
@@ -229,7 +235,9 @@ export function LinkItemCard({
                       setDraftNewCategoryName("");
                     }}
                   >
-                    {isNewCategoryMode ? "취소" : "+ 새 카테고리"}
+                    {isNewCategoryMode
+                      ? item.newCategory.cancel
+                      : item.newCategory.add}
                   </Button>
                 </div>
 
@@ -237,7 +245,7 @@ export function LinkItemCard({
                   <Input
                     name="categoryName"
                     type="text"
-                    placeholder="새 카테고리 이름"
+                    placeholder={item.newCategory.placeholder.value}
                     autoComplete="off"
                     value={draftNewCategoryName}
                     onChange={(event) =>
@@ -260,10 +268,15 @@ export function LinkItemCard({
                     onClick={() => setIsEditOpen(false)}
                     disabled={updateFetcher.state !== "idle"}
                   >
-                    Cancel
+                    {common.cancel}
                   </Button>
-                  <Button type="submit" disabled={updateFetcher.state !== "idle"}>
-                    {updateFetcher.state !== "idle" ? "Saving..." : "Save"}
+                  <Button
+                    type="submit"
+                    disabled={updateFetcher.state !== "idle"}
+                  >
+                    {updateFetcher.state !== "idle"
+                      ? common.saving
+                      : common.save}
                   </Button>
                 </DialogFooter>
               </updateFetcher.Form>
@@ -277,7 +290,7 @@ export function LinkItemCard({
                   variant="ghost"
                   size="icon-sm"
                   disabled={isBusy}
-                  aria-label="링크 삭제"
+                  aria-label={item.aria.delete.value}
                 >
                   <Trash2 className="text-muted-foreground" />
                 </Button>
@@ -285,9 +298,9 @@ export function LinkItemCard({
             />
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>링크를 삭제할까요?</AlertDialogTitle>
+                <AlertDialogTitle>{item.deleteDialog.title}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  삭제한 링크는 복구할 수 없습니다.
+                  {item.deleteDialog.description}
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -299,7 +312,7 @@ export function LinkItemCard({
 
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={deleteFetcher.state !== "idle"}>
-                  Cancel
+                  {common.cancel}
                 </AlertDialogCancel>
                 <deleteFetcher.Form method="post">
                   <input type="hidden" name="intent" value="delete-link" />
@@ -309,7 +322,9 @@ export function LinkItemCard({
                     variant="destructive"
                     disabled={deleteFetcher.state !== "idle"}
                   >
-                    {deleteFetcher.state !== "idle" ? "Deleting..." : "Delete"}
+                    {deleteFetcher.state !== "idle"
+                      ? common.deleting
+                      : common.delete}
                   </Button>
                 </deleteFetcher.Form>
               </AlertDialogFooter>
@@ -319,10 +334,10 @@ export function LinkItemCard({
       </div>
 
       <div className="flex grow flex-col gap-1">
-        <div className="line-clamp-2 break-words font-medium leading-snug">
+        <div className="line-clamp-2 wrap-break-word font-medium leading-snug">
           {displayTitle}
         </div>
-        <div className="text-muted-foreground line-clamp-3 break-words text-sm leading-snug">
+        <div className="text-muted-foreground line-clamp-3 wrap-break-word text-sm leading-snug">
           {displayDescription}
         </div>
       </div>

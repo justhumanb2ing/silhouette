@@ -30,7 +30,7 @@ export async function loader(args: Route.LoaderArgs) {
 
 export default function AuthLayout() {
   return (
-    <main className="h-full flex items-center justify-center">
+    <main className="h-full flex justify-center">
       <Outlet />
     </main>
   );
