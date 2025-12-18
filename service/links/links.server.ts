@@ -17,10 +17,26 @@ export type LinkListItem = Prisma.linksGetPayload<{
  */
 export async function listLinksForUser(
   prisma: PrismaClient,
-  userId: string
+  userId: string,
+  options?: { query?: string | null }
 ): Promise<LinkListItem[]> {
+  const query = options?.query?.trim();
+
   return prisma.links.findMany({
-    where: { user_id: userId },
+    where: query
+      ? {
+          user_id: userId,
+          OR: [
+            { title: { contains: query, mode: "insensitive" } },
+            {
+              AND: [
+                { title: null },
+                { url: { contains: query, mode: "insensitive" } },
+              ],
+            },
+          ],
+        }
+      : { user_id: userId },
     orderBy: { created_at: "desc" },
     take: 50,
     select: {

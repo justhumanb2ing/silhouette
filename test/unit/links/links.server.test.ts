@@ -67,6 +67,47 @@ describe("links.server", () => {
     ]);
   });
 
+  it("listLinksForUser applies search where clause (title first, url only when title is null)", async () => {
+    let received: unknown = undefined;
+
+    const prisma = {
+      links: {
+        async findMany(args: unknown) {
+          received = args;
+          return [];
+        },
+      },
+    } as unknown as PrismaClient;
+
+    await listLinksForUser(prisma, "user_1", { query: "hello" });
+
+    expect(received).toEqual({
+      where: {
+        user_id: "user_1",
+        OR: [
+          { title: { contains: "hello", mode: "insensitive" } },
+          {
+            AND: [
+              { title: null },
+              { url: { contains: "hello", mode: "insensitive" } },
+            ],
+          },
+        ],
+      },
+      orderBy: { created_at: "desc" },
+      take: 50,
+      select: {
+        id: true,
+        url: true,
+        title: true,
+        description: true,
+        image_url: true,
+        category_id: true,
+        is_favorite: true,
+      },
+    });
+  });
+
   it("setLinkFavoriteForUser updates only owned link", async () => {
     let received: unknown = undefined;
 

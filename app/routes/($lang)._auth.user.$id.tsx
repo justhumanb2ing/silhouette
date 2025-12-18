@@ -67,6 +67,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
+import { debounce } from "es-toolkit";
+
 import { normalizeLinkUrl } from "../../service/links/utils/normalize-link-url";
 import {
   createLinkForUser,
@@ -439,8 +441,11 @@ export async function loader(args: Route.LoaderArgs) {
     throw new Response("Forbidden", { status: 403 });
   }
 
+  const url = new URL(args.request.url);
+  const query = url.searchParams.get("q");
+
   const prisma = await getPrisma();
-  const links = await listLinksForUser(prisma, auth.userId);
+  const links = await listLinksForUser(prisma, auth.userId, { query });
   const categories = await listCategoriesForUser(prisma, auth.userId);
   return data({ links, categories });
 }
@@ -821,6 +826,38 @@ export default function UserRoute() {
   const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
+  const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
+  const searchParamsRef = useRef(searchParams);
+
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
+  useEffect(() => {
+    setSearchInput(searchParams.get("q") ?? "");
+  }, [searchParams]);
+
+  const debouncedSetQuery = useMemo(
+    () =>
+      debounce((nextValue: string) => {
+        const trimmed = nextValue.trim();
+        const nextParams = new URLSearchParams(searchParamsRef.current);
+        if (trimmed) {
+          nextParams.set("q", trimmed);
+        } else {
+          nextParams.delete("q");
+        }
+        setSearchParams(nextParams, { replace: true });
+      }, 250),
+    [setSearchParams]
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSetQuery.cancel();
+    };
+  }, [debouncedSetQuery]);
+
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>();
     for (const category of categories) {
@@ -956,7 +993,24 @@ export default function UserRoute() {
       </Card>
 
       <div className="mt-8">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3">
+          <Input
+            placeholder="검색 (title 기준, title이 없으면 url)"
+            value={searchInput}
+            onChange={(event) => {
+              const next = event.target.value;
+              setSearchInput(next);
+              debouncedSetQuery(next);
+            }}
+            onBlur={() => debouncedSetQuery.flush()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                debouncedSetQuery.flush();
+              }
+            }}
+          />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Tabs
             value={activeTab}
             onValueChange={(value) => {
@@ -997,6 +1051,7 @@ export default function UserRoute() {
               </NativeSelectOption>
             ))}
           </NativeSelect>
+          </div>
         </div>
 
         {filteredLinks.length === 0 ? (
