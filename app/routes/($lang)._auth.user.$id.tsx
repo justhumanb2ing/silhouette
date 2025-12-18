@@ -11,6 +11,7 @@ import {
   useLoaderData,
   useNavigation,
   useParams,
+  useSearchParams,
 } from "react-router";
 
 import type { Route } from "./+types/($lang)._auth.user.$id";
@@ -18,7 +19,6 @@ import type { Route } from "./+types/($lang)._auth.user.$id";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -59,6 +59,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 import { normalizeLinkUrl } from "../../service/links/utils/normalize-link-url";
@@ -83,6 +84,8 @@ type ActionData = {
 };
 
 type IntentResult = { ok: true } | { ok: false; message: string };
+
+type LinkView = "all" | "favorites";
 
 function isUuidish(input: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -150,24 +153,38 @@ function LinkItemCard({ link }: { link: LinkListItem }) {
     updateFetcher.state !== "idle" ||
     deleteFetcher.state !== "idle";
 
+  const displayTitle = link.title?.trim() ? link.title : link.url;
+  const displayDescription = link.description?.trim()
+    ? link.description
+    : "설명이 없습니다.";
+
   return (
     <Card size="sm">
-      <CardHeader className="gap-1">
-        <CardTitle className="text-sm font-medium break-all">
+      <CardContent className="flex flex-col gap-3">
+        <div className="relative">
           <a
             href={link.url}
             target="_blank"
             rel="noreferrer"
-            className="hover:underline underline-offset-4"
+            className="block overflow-hidden rounded-xl ring-foreground/10 ring-1"
+            aria-label="링크 열기"
           >
-            {link.url}
+            {link.image_url ? (
+              <img
+                src={link.image_url}
+                alt={displayTitle}
+                loading="lazy"
+                decoding="async"
+                className="h-40 w-full object-cover"
+              />
+            ) : (
+              <div className="bg-muted text-muted-foreground flex h-40 w-full items-center justify-center">
+                <ExternalLink />
+              </div>
+            )}
           </a>
-        </CardTitle>
-        <CardDescription className="font-mono">
-          {new Date(link.created_at).toLocaleString()}
-        </CardDescription>
-        <CardAction>
-          <div className="flex items-center gap-1">
+
+          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-xl bg-background/80 p-1 ring-foreground/10 ring-1 backdrop-blur-sm">
             <favoriteFetcher.Form method="post">
               <input type="hidden" name="intent" value="toggle-favorite" />
               <input type="hidden" name="linkId" value={link.id} />
@@ -304,8 +321,19 @@ function LinkItemCard({ link }: { link: LinkListItem }) {
               </AlertDialogContent>
             </AlertDialog>
           </div>
-        </CardAction>
-      </CardHeader>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <div className="font-medium leading-snug">{displayTitle}</div>
+          <div className="text-muted-foreground text-sm leading-snug">
+            {displayDescription}
+          </div>
+        </div>
+
+        <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+          <div className="font-mono break-all">{link.url}</div>
+        </div>
+      </CardContent>
     </Card>
   );
 }
@@ -319,6 +347,26 @@ export async function loader(args: Route.LoaderArgs) {
   const prisma = await getPrisma();
   const links = await listLinksForUser(prisma, auth.userId);
   return data({ links });
+}
+
+export function shouldRevalidate(args: Route.ShouldRevalidateArgs) {
+  const samePath = args.currentUrl.pathname === args.nextUrl.pathname;
+  if (!samePath) {
+    return args.defaultShouldRevalidate;
+  }
+
+  const stripTab = (url: URL) => {
+    const params = new URLSearchParams(url.searchParams);
+    params.delete("tab");
+    return params.toString();
+  };
+
+  const onlyTabChanged = stripTab(args.currentUrl) === stripTab(args.nextUrl);
+  if (onlyTabChanged && args.formMethod == null) {
+    return false;
+  }
+
+  return args.defaultShouldRevalidate;
 }
 
 export async function action(args: Route.ActionArgs) {
@@ -551,6 +599,13 @@ export default function UserRoute() {
   const actionData = useActionData<ActionData>();
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab: LinkView =
+    searchParams.get("tab") === "favorites" ? "favorites" : "all";
+
+  const filteredLinks =
+    activeTab === "favorites" ? links.filter((link) => link.is_favorite) : links;
 
   const prevLinkCountRef = useRef(links.length);
 
@@ -615,22 +670,48 @@ export default function UserRoute() {
       </Card>
 
       <div className="mt-8">
-        {links.length === 0 ? (
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            const next = value === "favorites" ? "favorites" : "all";
+            const nextParams = new URLSearchParams(searchParams);
+            if (next === "favorites") {
+              nextParams.set("tab", "favorites");
+            } else {
+              nextParams.delete("tab");
+            }
+            setSearchParams(nextParams, { replace: true });
+          }}
+          className="mb-4"
+        >
+          <TabsList>
+            <TabsTrigger value="all">전체</TabsTrigger>
+            <TabsTrigger value="favorites">즐겨찾기</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {filteredLinks.length === 0 ? (
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <ExternalLink />
               </EmptyMedia>
-              <EmptyTitle>저장된 링크가 없습니다</EmptyTitle>
+              <EmptyTitle>
+                {activeTab === "favorites"
+                  ? "즐겨찾기한 링크가 없습니다"
+                  : "저장된 링크가 없습니다"}
+              </EmptyTitle>
               <EmptyDescription>
-                위 입력창에 URL을 추가하면 여기에 표시됩니다.
+                {activeTab === "favorites"
+                  ? "링크를 즐겨찾기하면 여기에 표시됩니다."
+                  : "위 입력창에 URL을 추가하면 여기에 표시됩니다."}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent />
           </Empty>
         ) : (
           <div className="gap-3 flex flex-col">
-            {links.map((link) => (
+            {filteredLinks.map((link) => (
               <LinkItemCard key={link.id} link={link} />
             ))}
           </div>

@@ -6,8 +6,8 @@ export type LinkListItem = Prisma.linksGetPayload<{
     url: true;
     title: true;
     description: true;
+    image_url: true;
     is_favorite: true;
-    created_at: true;
   };
 }>;
 
@@ -27,8 +27,8 @@ export async function listLinksForUser(
       url: true,
       title: true,
       description: true,
+      image_url: true,
       is_favorite: true,
-      created_at: true,
     },
   });
 }

@@ -35,8 +35,6 @@ describe("links.server", () => {
   });
 
   it("listLinksForUser returns prisma-selected shape", async () => {
-    const now = new Date("2025-01-01T00:00:00.000Z");
-
     const prisma = {
       links: {
         async findMany() {
@@ -46,8 +44,8 @@ describe("links.server", () => {
               url: "https://example.com/",
               title: "Example",
               description: "Hello",
+              image_url: "https://cdn.example.com/image.png",
               is_favorite: false,
-              created_at: now,
             },
           ];
         },
@@ -61,8 +59,8 @@ describe("links.server", () => {
         url: "https://example.com/",
         title: "Example",
         description: "Hello",
+        image_url: "https://cdn.example.com/image.png",
         is_favorite: false,
-        created_at: now,
       },
     ]);
   });
