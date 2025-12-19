@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { Form } from "react-router";
 import { useIntlayer } from "react-intlayer";
 
@@ -54,12 +54,20 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
     const [open, setOpen] = useState(hasErrors);
     const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
+    const wasSubmittingRef = useRef(false);
 
     useEffect(() => {
       if (hasErrors) {
         setOpen(true);
       }
     }, [hasErrors]);
+
+    useEffect(() => {
+      if (wasSubmittingRef.current && !isSubmitting && !hasErrors) {
+        setOpen(false);
+      }
+      wasSubmittingRef.current = isSubmitting;
+    }, [hasErrors, isSubmitting]);
 
     useEffect(() => {
       if (!open) {
