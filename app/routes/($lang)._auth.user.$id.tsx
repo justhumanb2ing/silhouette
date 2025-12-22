@@ -28,7 +28,6 @@ import { AddLinkCard } from "@/components/links/add-link-card";
 import { LinkItemCard } from "@/components/links/link-item-card";
 import { LinksToolbar } from "@/components/links/links-toolbar";
 
-import { useSupabaseServer } from "@/config/supabase/server";
 import { getPrisma } from "@/lib/get-prisma";
 
 import { normalizeLinkUrl } from "../../service/links/utils/normalize-link-url";
@@ -452,16 +451,9 @@ export async function action(args: Route.ActionArgs) {
     };
 
     try {
-      const supabase = await useSupabaseServer(args);
-      const ogFallback: CreateLinkOgResult = {
-        ok: false,
-        message: "OG 요청 시간이 초과되었습니다.",
-      };
-
-      const ogPromise: Promise<CreateLinkOgResult> = fetchOgMetadataForUrl(
-        supabase,
-        { url: normalizedUrl.url }
-      ).catch((error) => {
+      const ogPromise: Promise<CreateLinkOgResult> = fetchOgMetadataForUrl({
+        url: normalizedUrl.url,
+      }).catch((error) => {
         Sentry.withScope((scope) => {
           scope.setLevel("error");
           scope.setTag("feature", "links");
@@ -473,11 +465,7 @@ export async function action(args: Route.ActionArgs) {
         return { ok: false, message: "OG 데이터를 가져오지 못했습니다." };
       });
 
-      const timeoutPromise = new Promise<CreateLinkOgResult>((resolve) =>
-        setTimeout(() => resolve(ogFallback), 3000)
-      );
-
-      ogResult = await Promise.race([ogPromise, timeoutPromise] as const);
+      ogResult = await ogPromise;
 
       if (!ogResult.ok) {
         const message = ogResult.message;

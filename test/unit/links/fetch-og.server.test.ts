@@ -1,30 +1,82 @@
-import { describe, expect, it } from "bun:test";
-
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 import { fetchOgMetadataForUrl } from "../../../service/links/fetch-og.server";
 
+const originalFetch = globalThis.fetch;
+
+type FetchCall = {
+  input: RequestInfo | URL;
+  init?: RequestInit;
+};
+
+function mockFetch(response: {
+  ok: boolean;
+  status?: number;
+  body?: unknown;
+  jsonError?: boolean;
+}): FetchCall[] {
+  const calls: FetchCall[] = [];
+  globalThis.fetch = (async (input, init) => {
+    calls.push({ input, init });
+
+    if (response.jsonError) {
+      return {
+        ok: response.ok,
+        status: response.status ?? 200,
+        json: async () => {
+          throw new Error("invalid json");
+        },
+      } as Response;
+    }
+
+    return {
+      ok: response.ok,
+      status: response.status ?? 200,
+      json: async () => response.body,
+    } as Response;
+  }) as typeof fetch;
+
+  return calls;
+}
+
 describe("fetch-og.server", () => {
-  it("maps edge response fields to OgMetadata", async () => {
-    const supabase = {
-      functions: {
-        async invoke() {
-          return {
-            data: {
-              url: "https://example.com/",
-              title: "Example",
-              description: "Hello",
-              image: "https://cdn.example.com/image.png",
-            },
-            error: null,
-          };
+  beforeEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("maps crawler response fields to OgMetadata", async () => {
+    const calls = mockFetch({
+      ok: true,
+      body: {
+        success: true,
+        data: {
+          url: "https://example.com/",
+          title: "Example",
+          description: "Hello",
+          image: "https://cdn.example.com/image.png",
         },
       },
-    } as unknown as SupabaseClient;
+    });
 
-    const result = await fetchOgMetadataForUrl(supabase, {
+    const result = await fetchOgMetadataForUrl({
       url: "https://input.example/",
     });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.input).toBe(
+      "https://silhouette-crawler-server.up.railway.app/crawl"
+    );
+    expect(calls[0]?.init?.method).toBe("POST");
+    expect(calls[0]?.init?.headers).toEqual({
+      "Content-Type": "application/json",
+    });
+    expect(calls[0]?.init?.body).toBe(
+      JSON.stringify({ url: "https://input.example/" })
+    );
 
     expect(result).toEqual({
       ok: true,
@@ -38,18 +90,15 @@ describe("fetch-og.server", () => {
   });
 
   it("falls back to input url when response url is invalid", async () => {
-    const supabase = {
-      functions: {
-        async invoke() {
-          return {
-            data: { url: "javascript:alert(1)", title: "X", image: null },
-            error: null,
-          };
-        },
+    mockFetch({
+      ok: true,
+      body: {
+        success: true,
+        data: { url: "javascript:alert(1)", title: "X", image: null },
       },
-    } as unknown as SupabaseClient;
+    });
 
-    const result = await fetchOgMetadataForUrl(supabase, {
+    const result = await fetchOgMetadataForUrl({
       url: "https://input.example/",
     });
 
@@ -65,23 +114,20 @@ describe("fetch-og.server", () => {
   });
 
   it("trims and truncates long fields for DB/UX safety", async () => {
-    const supabase = {
-      functions: {
-        async invoke() {
-          return {
-            data: {
-              url: "https://example.com/",
-              title: ` ${"t".repeat(300)} `,
-              description: ` ${"d".repeat(2500)} `,
-              image: "https://cdn.example.com/image.png",
-            },
-            error: null,
-          };
+    mockFetch({
+      ok: true,
+      body: {
+        success: true,
+        data: {
+          url: "https://example.com/",
+          title: ` ${"t".repeat(300)} `,
+          description: ` ${"d".repeat(2500)} `,
+          image: "https://cdn.example.com/image.png",
         },
       },
-    } as unknown as SupabaseClient;
+    });
 
-    const result = await fetchOgMetadataForUrl(supabase, {
+    const result = await fetchOgMetadataForUrl({
       url: "https://input.example/",
     });
 
@@ -93,4 +139,3 @@ describe("fetch-og.server", () => {
     expect(result.data.description?.length).toBe(2000);
   });
 });
-
