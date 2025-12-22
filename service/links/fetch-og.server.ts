@@ -7,9 +7,6 @@ export type OgMetadata = {
   imageUrl: string | null;
 };
 
-const OG_CRAWLER_ENDPOINT =
-  "https://silhouette-crawler-server.up.railway.app/crawl";
-
 type FetchOgCrawlerResponse = {
   success?: unknown;
   data?: {
@@ -58,13 +55,32 @@ function coerceOptionalHttpUrl(input: unknown): string | null {
  * 외부 크롤러 서버를 호출해 OG 메타데이터를 가져온다.
  * - 네트워크/페이지 상태에 따라 실패할 수 있으므로 caller에서 graceful fallback을 준비한다.
  * - 반환 데이터는 DB/UX 안정성을 위해 길이 및 포맷을 보정한다.
+ * - Clerk 토큰을 Authorization Bearer로 전달한다.
  */
 export async function fetchOgMetadataForUrl(input: {
   url: string;
+  token: string;
 }): Promise<{ ok: true; data: OgMetadata } | { ok: false; message: string }> {
-  const response = await fetch(OG_CRAWLER_ENDPOINT, {
+  const crawlerBaseUrl =
+    import.meta.env.RAILWAY_OG_CRAWLER_ENDPOINT ??
+    process.env.RAILWAY_OG_CRAWLER_ENDPOINT;
+  if (!crawlerBaseUrl) {
+    return {
+      ok: false,
+      message: "OG 크롤러 엔드포인트가 설정되지 않았습니다.",
+    };
+  }
+
+  const endpoint = new URL(
+    "/crawl",
+    crawlerBaseUrl
+  ).toString();
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${input.token}`,
+    },
     body: JSON.stringify({ url: input.url }),
   });
 

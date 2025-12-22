@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { fetchOgMetadataForUrl } from "../../../service/links/fetch-og.server";
 
 const originalFetch = globalThis.fetch;
+const crawlerBaseUrl = "http://localhost:8000";
 
 type FetchCall = {
   input: RequestInfo | URL;
@@ -42,6 +43,7 @@ function mockFetch(response: {
 describe("fetch-og.server", () => {
   beforeEach(() => {
     globalThis.fetch = originalFetch;
+    process.env.RAILWAY_OG_CRAWLER_ENDPOINT = crawlerBaseUrl;
   });
 
   afterEach(() => {
@@ -64,15 +66,17 @@ describe("fetch-og.server", () => {
 
     const result = await fetchOgMetadataForUrl({
       url: "https://input.example/",
+      token: "test-token",
     });
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]?.input).toBe(
-      "https://silhouette-crawler-server.up.railway.app/crawl"
-    );
+    const expectedEndpoint = new URL("/crawl", crawlerBaseUrl).toString();
+
+    expect(calls[0]?.input).toBe(expectedEndpoint);
     expect(calls[0]?.init?.method).toBe("POST");
     expect(calls[0]?.init?.headers).toEqual({
       "Content-Type": "application/json",
+      Authorization: "Bearer test-token",
     });
     expect(calls[0]?.init?.body).toBe(
       JSON.stringify({ url: "https://input.example/" })
@@ -100,6 +104,7 @@ describe("fetch-og.server", () => {
 
     const result = await fetchOgMetadataForUrl({
       url: "https://input.example/",
+      token: "test-token",
     });
 
     expect(result).toEqual({
@@ -129,6 +134,7 @@ describe("fetch-og.server", () => {
 
     const result = await fetchOgMetadataForUrl({
       url: "https://input.example/",
+      token: "test-token",
     });
 
     if (!result.ok) {

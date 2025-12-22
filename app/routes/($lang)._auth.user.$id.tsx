@@ -445,27 +445,39 @@ export async function action(args: Route.ActionArgs) {
       resolvedCategoryId = category.id;
     }
 
-    let ogResult: CreateLinkOgResult = {
+    const createOgFailure = (message: string): CreateLinkOgResult => ({
       ok: false,
-      message: "OG 데이터를 가져오지 못했습니다.",
-    };
+      message,
+    });
+
+    let ogResult: CreateLinkOgResult = createOgFailure(
+      "OG 데이터를 가져오지 못했습니다."
+    );
 
     try {
-      const ogPromise: Promise<CreateLinkOgResult> = fetchOgMetadataForUrl({
-        url: normalizedUrl.url,
-      }).catch((error) => {
-        Sentry.withScope((scope) => {
-          scope.setLevel("error");
-          scope.setTag("feature", "links");
-          scope.setTag("operation", "create.fetch-og");
-          scope.setExtra("url", normalizedUrl.url);
-          Sentry.captureException(error);
-        });
+      const token = await auth.getToken();
+      
+      const ogPromise: Promise<CreateLinkOgResult> = token
+        ? fetchOgMetadataForUrl({ url: normalizedUrl.url, token })
+        : Promise.resolve(
+            createOgFailure("OG 요청 토큰을 가져오지 못했습니다.")
+          );
 
-        return { ok: false, message: "OG 데이터를 가져오지 못했습니다." };
-      });
+      const ogResultPromise: Promise<CreateLinkOgResult> = ogPromise.catch(
+        (error) => {
+          Sentry.withScope((scope) => {
+            scope.setLevel("error");
+            scope.setTag("feature", "links");
+            scope.setTag("operation", "create.fetch-og");
+            scope.setExtra("url", normalizedUrl.url);
+            Sentry.captureException(error);
+          });
 
-      ogResult = await ogPromise;
+          return createOgFailure("OG 데이터를 가져오지 못했습니다.");
+        }
+      );
+
+      ogResult = await ogResultPromise;
 
       if (!ogResult.ok) {
         const message = ogResult.message;
