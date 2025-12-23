@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher, useRevalidator, useSearchParams } from "react-router";
 import { useIntlayer } from "react-intlayer";
 
@@ -19,7 +19,18 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { debounce } from "es-toolkit";
 
-type LinkView = "all" | "favorites";
+const LINK_VIEW = {
+  all: "all",
+  favorites: "favorites",
+} as const;
+
+const SEARCH_KEYS = {
+  query: "q",
+  tab: "tab",
+  category: "category",
+} as const;
+
+type LinkView = (typeof LINK_VIEW)[keyof typeof LINK_VIEW];
 
 type CategoryListItem = { id: string; name: string };
 
@@ -32,76 +43,113 @@ export function LinksToolbar({
 }) {
   const { common, toolbar } = useIntlayer("links");
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
-  const searchParamsRef = useRef(searchParams);
+  const queryValue = searchParams.get(SEARCH_KEYS.query) ?? "";
+  const [searchInput, setSearchInput] = useState(queryValue);
+  const [isSearchDirty, setIsSearchDirty] = useState(false);
   const deleteFetcher = useFetcher<IntentResult>();
   const revalidator = useRevalidator();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const lastDeleteCategoryIdRef = useRef<string | null>(null);
-  const handledDeleteCategoryIdRef = useRef<string | null>(null);
+  const [pendingDeleteCategoryId, setPendingDeleteCategoryId] = useState<
+    string | null
+  >(null);
 
   const activeTab: LinkView =
-    searchParams.get("tab") === "favorites" ? "favorites" : "all";
-  const activeCategoryId = searchParams.get("category");
+    searchParams.get(SEARCH_KEYS.tab) === LINK_VIEW.favorites
+      ? LINK_VIEW.favorites
+      : LINK_VIEW.all;
+  const activeCategoryId = searchParams.get(SEARCH_KEYS.category);
 
-  const debouncedSetQuery = useMemo(
-    () =>
-      debounce((nextValue: string) => {
-        const trimmed = nextValue.trim();
-        const nextParams = new URLSearchParams(searchParamsRef.current);
-        if (trimmed) {
-          nextParams.set("q", trimmed);
-        } else {
-          nextParams.delete("q");
-        }
-        setSearchParams(nextParams, { replace: true });
-      }, 250),
+  const updateSearchParams = useCallback(
+    (updater: (params: URLSearchParams) => void) => {
+      setSearchParams((prev) => {
+        const nextParams = new URLSearchParams(prev);
+        updater(nextParams);
+        return nextParams;
+      }, { replace: true });
+    },
     [setSearchParams]
   );
 
-  useEffect(() => {
-    searchParamsRef.current = searchParams;
-  }, [searchParams]);
+  const applySearchQuery = useCallback(
+    (nextValue: string) => {
+      updateSearchParams((params) => {
+        const trimmed = nextValue.trim();
+        if (trimmed) {
+          params.set(SEARCH_KEYS.query, trimmed);
+        } else {
+          params.delete(SEARCH_KEYS.query);
+        }
+      });
+    },
+    [updateSearchParams]
+  );
+
+  const setActiveTab = useCallback(
+    (nextTab: LinkView) => {
+      updateSearchParams((params) => {
+        if (nextTab === LINK_VIEW.favorites) {
+          params.set(SEARCH_KEYS.tab, LINK_VIEW.favorites);
+        } else {
+          params.delete(SEARCH_KEYS.tab);
+        }
+      });
+    },
+    [updateSearchParams]
+  );
+
+  const setActiveCategoryId = useCallback(
+    (nextCategoryId: string | null) => {
+      updateSearchParams((params) => {
+        if (nextCategoryId) {
+          params.set(SEARCH_KEYS.category, nextCategoryId);
+        } else {
+          params.delete(SEARCH_KEYS.category);
+        }
+      });
+    },
+    [updateSearchParams]
+  );
+
+  const debouncedApplySearchQuery = useMemo(
+    () => debounce(applySearchQuery, 250),
+    [applySearchQuery]
+  );
 
   useEffect(() => {
-    setSearchInput(searchParams.get("q") ?? "");
-  }, [searchParams]);
+    setSearchInput(queryValue);
+    setIsSearchDirty(false);
+  }, [queryValue]);
 
   useEffect(() => {
+    if (!isSearchDirty) return;
+    debouncedApplySearchQuery(searchInput);
     return () => {
-      debouncedSetQuery.cancel();
+      debouncedApplySearchQuery.cancel();
     };
-  }, [debouncedSetQuery]);
+  }, [debouncedApplySearchQuery, isSearchDirty, searchInput]);
 
   const isDeletingCategory = deleteFetcher.state !== "idle";
   const canDeleteCategory = Boolean(activeCategoryId);
+  const isDeleteSuccess =
+    deleteFetcher.state === "idle" && deleteFetcher.data?.ok === true;
 
   useEffect(() => {
-    if (deleteFetcher.state !== "idle") return;
-    if (!deleteFetcher.data?.ok) return;
-    const deletedCategoryId = lastDeleteCategoryIdRef.current;
-    if (!deletedCategoryId) return;
-    if (handledDeleteCategoryIdRef.current === deletedCategoryId) {
-      return;
-    }
+    if (!isDeleteSuccess) return;
+    if (!pendingDeleteCategoryId) return;
 
-    handledDeleteCategoryIdRef.current = deletedCategoryId;
     setIsDeleteDialogOpen(false);
     revalidator.revalidate();
 
-    const nextParams = new URLSearchParams(searchParams);
-    if (nextParams.get("category") !== deletedCategoryId) {
-      return;
+    if (activeCategoryId === pendingDeleteCategoryId) {
+      setActiveCategoryId(null);
     }
-
-    nextParams.delete("category");
-    setSearchParams(nextParams, { replace: true });
+    setPendingDeleteCategoryId(null);
   }, [
-    deleteFetcher.data,
-    deleteFetcher.state,
+    activeCategoryId,
+    isDeleteSuccess,
+    pendingDeleteCategoryId,
     revalidator,
-    searchParams,
-    setSearchParams,
+    setActiveCategoryId,
   ]);
 
   useEffect(() => {
@@ -120,13 +168,12 @@ export function LinksToolbar({
         >
           <Button
             type="button"
-            size="sm"
+            size={"lg"}
             variant={!activeCategoryId ? "secondary" : "ghost"}
+            className={"text-sm"}
             aria-pressed={!activeCategoryId}
             onClick={() => {
-              const nextParams = new URLSearchParams(searchParams);
-              nextParams.delete("category");
-              setSearchParams(nextParams, { replace: true });
+              setActiveCategoryId(null);
             }}
           >
             {toolbar.allCategories}
@@ -137,13 +184,12 @@ export function LinksToolbar({
               <Button
                 key={category.id}
                 type="button"
-                size="sm"
+                size={"lg"}
                 variant={isActive ? "secondary" : "ghost"}
+                className={"text-sm"}
                 aria-pressed={isActive}
                 onClick={() => {
-                  const nextParams = new URLSearchParams(searchParams);
-                  nextParams.set("category", category.id);
-                  setSearchParams(nextParams, { replace: true });
+                  setActiveCategoryId(category.id);
                 }}
               >
                 {category.name}
@@ -193,7 +239,7 @@ export function LinksToolbar({
               <deleteFetcher.Form
                 method="post"
                 onSubmit={() => {
-                  lastDeleteCategoryIdRef.current = activeCategoryId ?? null;
+                  setPendingDeleteCategoryId(activeCategoryId ?? null);
                 }}
               >
                 <input type="hidden" name="intent" value="delete-category" />
@@ -219,14 +265,17 @@ export function LinksToolbar({
         placeholder={toolbar.searchPlaceholder.value}
         value={searchInput}
         onChange={(event) => {
-          const next = event.target.value;
-          setSearchInput(next);
-          debouncedSetQuery(next);
+          setSearchInput(event.target.value);
+          setIsSearchDirty(true);
         }}
-        onBlur={() => debouncedSetQuery.flush()}
+        onBlur={() => {
+          debouncedApplySearchQuery.flush();
+          setIsSearchDirty(false);
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
-            debouncedSetQuery.flush();
+            debouncedApplySearchQuery.flush();
+            setIsSearchDirty(false);
           }
         }}
       />
@@ -235,19 +284,14 @@ export function LinksToolbar({
         <Tabs
           value={activeTab}
           onValueChange={(value) => {
-            const next = value === "favorites" ? "favorites" : "all";
-            const nextParams = new URLSearchParams(searchParams);
-            if (next === "favorites") {
-              nextParams.set("tab", "favorites");
-            } else {
-              nextParams.delete("tab");
-            }
-            setSearchParams(nextParams, { replace: true });
+            const next =
+              value === LINK_VIEW.favorites ? LINK_VIEW.favorites : LINK_VIEW.all;
+            setActiveTab(next);
           }}
         >
           <TabsList>
-            <TabsTrigger value="all">{toolbar.tabs.all}</TabsTrigger>
-            <TabsTrigger value="favorites">
+            <TabsTrigger value={LINK_VIEW.all}>{toolbar.tabs.all}</TabsTrigger>
+            <TabsTrigger value={LINK_VIEW.favorites}>
               {toolbar.tabs.favorites}
             </TabsTrigger>
           </TabsList>

@@ -146,20 +146,21 @@ export default function UserRoute() {
   }, [initialLinks, initialNextCursor]);
 
   useEffect(() => {
-    if (!loadMoreFetcher.data) return;
-    if (loadMoreFetcher.data.listKey !== listKey) return;
+    const fetcherData = loadMoreFetcher.data;
+    if (!fetcherData) return;
+    if (fetcherData.listKey !== listKey) return;
 
     setLinks((prev) => {
       const seen = new Set(prev.map((link) => link.id));
       const merged = [...prev];
-      for (const link of loadMoreFetcher.data.links) {
+      for (const link of fetcherData.links) {
         if (!seen.has(link.id)) {
           merged.push(link);
         }
       }
       return merged;
     });
-    setNextCursor(loadMoreFetcher.data.nextCursor);
+    setNextCursor(fetcherData.nextCursor);
   }, [listKey, loadMoreFetcher.data]);
 
   const categoryNameById = useMemo(() => {
