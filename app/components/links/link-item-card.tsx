@@ -1,10 +1,16 @@
-import { ExternalLink, Pencil, Star, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import { useIntlayer } from "react-intlayer";
 
 import { Button } from "@/components/ui/button";
-import { Item } from "@/components/ui/item";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -32,6 +38,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import type { LinkListItem } from "../../../service/links/links.server";
+import { Badge } from "../ui/badge";
+import {
+  ArrowSquareOutIcon,
+  HeartIcon,
+} from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
 
 type IntentResult = { ok: true } | { ok: false; message: string };
 
@@ -108,14 +120,14 @@ export function LinkItemCard({
   return (
     <Item
       size="sm"
-      className="ring-0 flex flex-col items-stretch gap-2 overflow-hidden p-1"
+      className="ring-0 flex flex-col items-stretch gap-2 overflow-hidden p-1 rounded-none"
     >
-      <div className="relative">
+      <ItemMedia className="relative w-full">
         <a
           href={link.url}
           target="_blank"
           rel="noreferrer"
-          className="block overflow-hidden rounded-xl"
+          className="inline-block w-full overflow-hidden"
           aria-label={item.aria.open.value}
         >
           {link.image_url ? (
@@ -127,13 +139,12 @@ export function LinkItemCard({
               className="h-40 w-full object-cover"
             />
           ) : (
-            <div className="bg-muted text-muted-foreground flex h-40 w-full items-center justify-center">
-              <ExternalLink />
+            <div className="bg-muted/60 text-muted-foreground flex h-40 w-full items-center justify-center">
+              <ArrowSquareOutIcon size={28} />
             </div>
           )}
         </a>
-
-        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-xl bg-background/80 p-1 ring-foreground/10 ring-1 backdrop-blur-sm">
+        <aside className="absolute right-2 top-2">
           <favoriteFetcher.Form method="post">
             <input type="hidden" name="intent" value="toggle-favorite" />
             <input type="hidden" name="linkId" value={link.id} />
@@ -145,7 +156,7 @@ export function LinkItemCard({
             <Button
               type="submit"
               variant="ghost"
-              size="icon-sm"
+              className="size-8 bg-black/55 backdrop-blur-sm hover:bg-black/65 border-none rounded-full"
               disabled={isBusy}
               aria-label={
                 optimisticIsFavorite
@@ -153,26 +164,44 @@ export function LinkItemCard({
                   : item.aria.favoriteAdd.value
               }
             >
-              <Star
-                className={
+              <HeartIcon
+                size={56}
+                weight={optimisticIsFavorite ? "fill" : "regular"}
+                className={cn(
+                  "text-lg",
                   optimisticIsFavorite
-                    ? "fill-current text-amber-500"
-                    : "text-muted-foreground"
-                }
+                    ? "text-red-500 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                    : "text-muted drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                )}
               />
             </Button>
           </favoriteFetcher.Form>
-
+        </aside>
+      </ItemMedia>
+      <ItemContent className="relative">
+        <ItemTitle className="line-clamp-2 wrap-break-word font-medium text-sm leading-snug">
+          {displayTitle}
+        </ItemTitle>
+        <ItemDescription className="text-muted-foreground line-clamp-3 wrap-break-word text-sm leading-snug">
+          {displayDescription}
+        </ItemDescription>
+      </ItemContent>
+      <ItemActions className="justify-between">
+        {categoryName ? (
+          <Badge variant={"secondary"}>{categoryName}</Badge>
+        ) : null}
+        <aside className="flex-1 flex items-center justify-end gap-1">
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogTrigger
               render={
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size={"sm"}
                   disabled={isBusy}
                   aria-label={item.aria.edit.value}
+                  className={"text-muted-foreground"}
                 >
-                  <Pencil className="text-muted-foreground" />
+                  {item.actions.edit}
                 </Button>
               }
             />
@@ -288,11 +317,11 @@ export function LinkItemCard({
               render={
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size="sm"
                   disabled={isBusy}
                   aria-label={item.aria.delete.value}
                 >
-                  <Trash2 className="text-muted-foreground" />
+                  {item.actions.remove}
                 </Button>
               }
             />
@@ -330,23 +359,8 @@ export function LinkItemCard({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>
-      </div>
-
-      <div className="flex grow flex-col gap-1">
-        <div className="line-clamp-2 wrap-break-word font-medium leading-snug">
-          {displayTitle}
-        </div>
-        <div className="text-muted-foreground line-clamp-3 wrap-break-word text-sm leading-snug">
-          {displayDescription}
-        </div>
-      </div>
-
-      {categoryName ? (
-        <div className="text-muted-foreground mt-auto text-xs">
-          {categoryName}
-        </div>
-      ) : null}
+        </aside>
+      </ItemActions>
     </Item>
   );
 }

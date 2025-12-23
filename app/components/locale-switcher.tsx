@@ -21,7 +21,7 @@ export default function LocaleSwitcher() {
   const pathWithoutLocale = getPathWithoutLocale(pathname);
 
   return (
-    <nav aria-label={localeSwitcherLabel} className="flex justify-end">
+    <nav aria-label={localeSwitcherLabel.value} className="flex justify-end">
       <Select
         value={locale ?? null}
         onValueChange={(nextLocale) => {
@@ -33,7 +33,7 @@ export default function LocaleSwitcher() {
       >
         <SelectTrigger
           size="sm"
-          aria-label={localeSwitcherLabel}
+          aria-label={localeSwitcherLabel.value}
           className={"border-none bg-background hover:bg-muted rounded-md"}
         >
           <SelectValue>
@@ -44,7 +44,7 @@ export default function LocaleSwitcher() {
             }
           </SelectValue>
         </SelectTrigger>
-        <SelectContent align="end" className={"p-2"}>
+        <SelectContent align="end" className={"p-2 shadow-xs"}>
           {availableLocales.map((localeItem) => {
             const label = getLocaleName(localeItem);
 

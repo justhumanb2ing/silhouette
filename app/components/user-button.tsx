@@ -34,12 +34,15 @@ export default function UserButton() {
           className="object-cover w-full h-full"
         />
       </Button>
-      <LocalizedLink to={`/user/${user.id}`}>{profile}</LocalizedLink>
+      <LocalizedLink to={`/user/${user.id}`} className="text-sm">
+        {profile}
+      </LocalizedLink>
       <Button variant={"ghost"} onClick={() => signOut()}>
         {signOutLabel}
       </Button>
       <Button
         variant="ghost"
+        className={"cursor-pointer"}
         render={
           <SignInButton>
             <span>{signIn}</span>
@@ -47,6 +50,7 @@ export default function UserButton() {
         }
       />
       <Button
+        className={"cursor-pointer"}
         render={
           <SignUpButton>
             <span>{signUp}</span>
@@ -58,6 +62,7 @@ export default function UserButton() {
     <>
       <Button
         variant="ghost"
+        className={"cursor-pointer"}
         render={
           <SignInButton>
             <span>{signIn}</span>
@@ -65,6 +70,7 @@ export default function UserButton() {
         }
       />
       <Button
+        className={"cursor-pointer"}
         render={
           <SignUpButton>
             <span>{signUp}</span>

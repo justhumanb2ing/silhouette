@@ -12,20 +12,44 @@ export type LinkListItem = Prisma.linksGetPayload<{
   };
 }>;
 
+export type LinkListPage = {
+  links: LinkListItem[];
+  nextCursor: string | null;
+};
+
+type LinkListOptions = {
+  query?: string | null;
+  cursor?: string | null;
+  limit?: number | null;
+  favoritesOnly?: boolean;
+  categoryId?: string | null;
+};
+
+const DEFAULT_LINKS_PAGE_SIZE = 5;
+const MAX_LINKS_PAGE_SIZE = 100;
+
 /**
- * 특정 사용자의 최근 링크 목록을 가져온다.
+ * 특정 사용자의 최근 링크 목록을 페이지네이션 형태로 가져온다.
+ * cursor가 제공되면 해당 커서 이후의 데이터를 이어서 조회한다.
  */
 export async function listLinksForUser(
   prisma: PrismaClient,
   userId: string,
-  options?: { query?: string | null }
-): Promise<LinkListItem[]> {
+  options?: LinkListOptions
+): Promise<LinkListPage> {
   const query = options?.query?.trim();
+  const pageSizeInput = options?.limit ?? DEFAULT_LINKS_PAGE_SIZE;
+  const pageSize = Number.isFinite(pageSizeInput)
+    ? Math.max(1, Math.min(pageSizeInput, MAX_LINKS_PAGE_SIZE))
+    : DEFAULT_LINKS_PAGE_SIZE;
+  const cursor = options?.cursor ?? null;
 
-  return prisma.links.findMany({
-    where: query
+  const where: Prisma.linksWhereInput = {
+    user_id: userId,
+    ...(options?.favoritesOnly ? { is_favorite: true } : {}),
+    ...(options?.categoryId ? { category_id: options.categoryId } : {}),
+    ...(query
       ? {
-          user_id: userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             {
@@ -36,9 +60,14 @@ export async function listLinksForUser(
             },
           ],
         }
-      : { user_id: userId },
-    orderBy: { created_at: "desc" },
-    take: 50,
+      : {}),
+  };
+
+  const result = await prisma.links.findMany({
+    where,
+    orderBy: [{ created_at: "desc" }, { id: "desc" }],
+    take: pageSize + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     select: {
       id: true,
       url: true,
@@ -49,6 +78,12 @@ export async function listLinksForUser(
       is_favorite: true,
     },
   });
+
+  const hasMore = result.length > pageSize;
+  const links = hasMore ? result.slice(0, pageSize) : result;
+  const nextCursor = hasMore ? links.at(-1)?.id ?? null : null;
+
+  return { links, nextCursor };
 }
 
 /**

@@ -10,6 +10,8 @@ const linksContent = {
       saving: t({ en: "Saving...", ko: "저장 중..." }),
       delete: t({ en: "Delete", ko: "삭제" }),
       deleting: t({ en: "Deleting...", ko: "삭제 중..." }),
+      loadMore: t({ en: "Load more", ko: "더보기" }),
+      loadingMore: t({ en: "Loading...", ko: "불러오는 중..." }),
     },
     addLink: {
       trigger: t({ en: "Add link", ko: "링크 추가" }),
@@ -69,6 +71,10 @@ const linksContent = {
     item: {
       fallbackTitle: t({ en: "Link", ko: "링크" }),
       noDescription: t({ en: "No description.", ko: "설명이 없습니다." }),
+      actions: {
+        edit: t({ en: "Edit", ko: "수정" }),
+        remove: t({ en: "Remove", ko: "삭제" }),
+      },
       aria: {
         open: t({ en: "Open link", ko: "링크 열기" }),
         favoriteAdd: t({ en: "Add to favorites", ko: "즐겨찾기 추가" }),

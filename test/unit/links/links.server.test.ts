@@ -61,17 +61,20 @@ describe("links.server", () => {
     } as unknown as PrismaClient;
 
     const result = await listLinksForUser(prisma, "user_1");
-    expect(result).toEqual([
-      {
-        id: "link_1",
-        url: "https://example.com/",
-        title: "Example",
-        description: "Hello",
-        image_url: "https://cdn.example.com/image.png",
-        category_id: "cat_1",
-        is_favorite: false,
-      },
-    ]);
+    expect(result).toEqual({
+      links: [
+        {
+          id: "link_1",
+          url: "https://example.com/",
+          title: "Example",
+          description: "Hello",
+          image_url: "https://cdn.example.com/image.png",
+          category_id: "cat_1",
+          is_favorite: false,
+        },
+      ],
+      nextCursor: null,
+    });
   });
 
   it("listLinksForUser applies search where clause (title first, url only when title is null)", async () => {
@@ -101,8 +104,8 @@ describe("links.server", () => {
           },
         ],
       },
-      orderBy: { created_at: "desc" },
-      take: 50,
+      orderBy: [{ created_at: "desc" }, { id: "desc" }],
+      take: 51,
       select: {
         id: true,
         url: true,
@@ -112,6 +115,120 @@ describe("links.server", () => {
         category_id: true,
         is_favorite: true,
       },
+    });
+  });
+
+  it("listLinksForUser applies cursor pagination", async () => {
+    let received: unknown = undefined;
+
+    const prisma = {
+      links: {
+        async findMany(args: unknown) {
+          received = args;
+          return [];
+        },
+      },
+    } as unknown as PrismaClient;
+
+    await listLinksForUser(prisma, "user_1", {
+      cursor: "link_10",
+      limit: 10,
+    });
+
+    expect(received).toEqual({
+      where: { user_id: "user_1" },
+      orderBy: [{ created_at: "desc" }, { id: "desc" }],
+      take: 11,
+      cursor: { id: "link_10" },
+      skip: 1,
+      select: {
+        id: true,
+        url: true,
+        title: true,
+        description: true,
+        image_url: true,
+        category_id: true,
+        is_favorite: true,
+      },
+    });
+  });
+
+  it("listLinksForUser includes favorites/category filters", async () => {
+    let received: unknown = undefined;
+
+    const prisma = {
+      links: {
+        async findMany(args: unknown) {
+          received = args;
+          return [];
+        },
+      },
+    } as unknown as PrismaClient;
+
+    await listLinksForUser(prisma, "user_1", {
+      favoritesOnly: true,
+      categoryId: "cat_1",
+    });
+
+    expect(received).toEqual({
+      where: { user_id: "user_1", is_favorite: true, category_id: "cat_1" },
+      orderBy: [{ created_at: "desc" }, { id: "desc" }],
+      take: 51,
+      select: {
+        id: true,
+        url: true,
+        title: true,
+        description: true,
+        image_url: true,
+        category_id: true,
+        is_favorite: true,
+      },
+    });
+  });
+
+  it("listLinksForUser returns nextCursor when more links remain", async () => {
+    const prisma = {
+      links: {
+        async findMany() {
+          return [
+            {
+              id: "link_2",
+              url: "https://example.com/2",
+              title: null,
+              description: null,
+              image_url: null,
+              category_id: null,
+              is_favorite: false,
+            },
+            {
+              id: "link_1",
+              url: "https://example.com/1",
+              title: null,
+              description: null,
+              image_url: null,
+              category_id: null,
+              is_favorite: false,
+            },
+          ];
+        },
+      },
+    } as unknown as PrismaClient;
+
+    const result = await listLinksForUser(prisma, "user_1", { limit: 1 });
+
+    expect(result).toEqual({
+      links: [
+        {
+          id: "link_2",
+          url: "https://example.com/2",
+          title: null,
+          description: null,
+          image_url: null,
+          category_id: null,
+          is_favorite: false,
+        },
+      ],
+      nextCursor: "link_2",
     });
   });
 

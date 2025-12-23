@@ -15,10 +15,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { debounce } from "es-toolkit";
@@ -116,6 +112,109 @@ export function LinksToolbar({
 
   return (
     <div className="mb-4 flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div
+          className="flex flex-wrap items-center gap-2"
+          role="group"
+          aria-label={toolbar.categoryFilterAriaLabel.value}
+        >
+          <Button
+            type="button"
+            size="sm"
+            variant={!activeCategoryId ? "secondary" : "ghost"}
+            aria-pressed={!activeCategoryId}
+            onClick={() => {
+              const nextParams = new URLSearchParams(searchParams);
+              nextParams.delete("category");
+              setSearchParams(nextParams, { replace: true });
+            }}
+          >
+            {toolbar.allCategories}
+          </Button>
+          {categories.map((category) => {
+            const isActive = activeCategoryId === category.id;
+            return (
+              <Button
+                key={category.id}
+                type="button"
+                size="sm"
+                variant={isActive ? "secondary" : "ghost"}
+                aria-pressed={isActive}
+                onClick={() => {
+                  const nextParams = new URLSearchParams(searchParams);
+                  nextParams.set("category", category.id);
+                  setSearchParams(nextParams, { replace: true });
+                }}
+              >
+                {category.name}
+              </Button>
+            );
+          })}
+        </div>
+
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                className="ml-auto"
+                disabled={!canDeleteCategory || isDeletingCategory}
+                aria-label={toolbar.categoryDelete.ariaLabel.value}
+              >
+                <Trash2 className="text-destructive" />
+              </Button>
+            }
+          />
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {toolbar.categoryDelete.title}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {toolbar.categoryDelete.description}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            {deleteFetcher.data && !deleteFetcher.data.ok ? (
+              <div className="text-sm text-destructive" role="alert">
+                {deleteFetcher.data.message}
+              </div>
+            ) : null}
+
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingCategory}>
+                {common.cancel}
+              </AlertDialogCancel>
+              <deleteFetcher.Form
+                method="post"
+                onSubmit={() => {
+                  lastDeleteCategoryIdRef.current = activeCategoryId ?? null;
+                }}
+              >
+                <input type="hidden" name="intent" value="delete-category" />
+                <input
+                  type="hidden"
+                  name="categoryId"
+                  value={activeCategoryId ?? ""}
+                />
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={!canDeleteCategory || isDeletingCategory}
+                >
+                  {isDeletingCategory ? common.deleting : common.delete}
+                </Button>
+              </deleteFetcher.Form>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
       <Input
         placeholder={toolbar.searchPlaceholder.value}
         value={searchInput}
@@ -132,7 +231,7 @@ export function LinksToolbar({
         }}
       />
 
-      <div className="flex gap-3 flex-row items-center justify-between">
+      <div className="flex gap-3 flex-row items-center">
         <Tabs
           value={activeTab}
           onValueChange={(value) => {
@@ -153,93 +252,6 @@ export function LinksToolbar({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-
-        <div className="flex items-center gap-2">
-          <NativeSelect
-            aria-label={toolbar.categoryFilterAriaLabel.value}
-            value={activeCategoryId ?? ""}
-            onChange={(event) => {
-              const next = event.target.value;
-              const nextParams = new URLSearchParams(searchParams);
-              if (next) {
-                nextParams.set("category", next);
-              } else {
-                nextParams.delete("category");
-              }
-              setSearchParams(nextParams, { replace: true });
-            }}
-          >
-            <NativeSelectOption value="">
-              {toolbar.allCategories}
-            </NativeSelectOption>
-            {categories.map((category) => (
-              <NativeSelectOption key={category.id} value={category.id}>
-                {category.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-
-          <AlertDialog
-            open={isDeleteDialogOpen}
-            onOpenChange={setIsDeleteDialogOpen}
-          >
-            <AlertDialogTrigger
-              render={
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  disabled={!canDeleteCategory || isDeletingCategory}
-                  aria-label={toolbar.categoryDelete.ariaLabel.value}
-                >
-                  <Trash2 className="text-destructive" />
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {toolbar.categoryDelete.title}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {toolbar.categoryDelete.description}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-
-              {deleteFetcher.data && !deleteFetcher.data.ok ? (
-                <div className="text-sm text-destructive" role="alert">
-                  {deleteFetcher.data.message}
-                </div>
-              ) : null}
-
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeletingCategory}>
-                  {common.cancel}
-                </AlertDialogCancel>
-                <deleteFetcher.Form
-                  method="post"
-                  onSubmit={() => {
-                    lastDeleteCategoryIdRef.current = activeCategoryId ?? null;
-                  }}
-                >
-                  <input type="hidden" name="intent" value="delete-category" />
-                  <input
-                    type="hidden"
-                    name="categoryId"
-                    value={activeCategoryId ?? ""}
-                  />
-                  <Button
-                    type="submit"
-                    variant="destructive"
-                    disabled={!canDeleteCategory || isDeletingCategory}
-                  >
-                    {isDeletingCategory ? common.deleting : common.delete}
-                  </Button>
-                </deleteFetcher.Form>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
       </div>
     </div>
   );

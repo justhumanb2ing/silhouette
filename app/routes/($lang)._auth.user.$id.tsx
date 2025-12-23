@@ -1,12 +1,14 @@
 import { getAuth } from "@clerk/react-router/server";
 import { ExternalLink } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useIntlayer } from "react-intlayer";
 import {
   type ShouldRevalidateFunctionArgs,
   data,
   useActionData,
+  useFetcher,
   useLoaderData,
+  useLocation,
   useNavigation,
   useParams,
   useSearchParams,
@@ -22,6 +24,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Button } from "@/components/ui/button";
 import { AddLinkCard } from "@/components/links/add-link-card";
 import { LinkItemCard } from "@/components/links/link-item-card";
 import { LinksToolbar } from "@/components/links/links-toolbar";
@@ -34,7 +37,7 @@ import { handleCreateLink } from "../../service/links/actions/create-link.server
 import { handleDeleteLink } from "../../service/links/actions/delete-link.server";
 import { handleToggleFavorite } from "../../service/links/actions/toggle-favorite.server";
 import { handleUpdateLink } from "../../service/links/actions/update-link.server";
-import { listLinksForUser } from "../../service/links/links.server";
+import { listLinksForUser, type LinkListItem } from "../../service/links/links.server";
 
 type ActionData = {
   fields?: {
@@ -48,6 +51,12 @@ type ActionData = {
 
 type LinkView = "all" | "favorites";
 
+type LinksPaginationData = {
+  links: LinkListItem[];
+  nextCursor: string | null;
+  listKey: string;
+};
+
 export async function loader(args: Route.LoaderArgs) {
   const auth = await getAuth(args);
   if (!auth.userId || args.params.id !== auth.userId) {
@@ -56,11 +65,24 @@ export async function loader(args: Route.LoaderArgs) {
 
   const url = new URL(args.request.url);
   const query = url.searchParams.get("q");
+  const tab = url.searchParams.get("tab");
+  const categoryId = url.searchParams.get("category");
+  const cursorParam = url.searchParams.get("cursor");
+  const cursor = cursorParam?.trim() ? cursorParam : null;
+  const favoritesOnly = tab === "favorites";
+  const listKeyParams = new URLSearchParams(url.searchParams);
+  listKeyParams.delete("cursor");
+  const listKey = listKeyParams.toString();
 
   const prisma = await getPrisma();
-  const links = await listLinksForUser(prisma, auth.userId, { query });
-  const categories = await listCategoriesForUser(prisma, auth.userId);
-  return data({ links, categories });
+  const { links, nextCursor } = await listLinksForUser(prisma, auth.userId, {
+    query,
+    cursor,
+    favoritesOnly,
+    categoryId,
+  });
+  const categories = cursor ? [] : await listCategoriesForUser(prisma, auth.userId);
+  return data({ links, categories, nextCursor, listKey });
 }
 
 export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
@@ -69,21 +91,8 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
     return args.defaultShouldRevalidate;
   }
 
-  const sameSearch = args.currentUrl.search === args.nextUrl.search;
-  if (sameSearch && args.formMethod == null) {
+  if (args.formMethod == null) {
     return true;
-  }
-
-  const stripTab = (url: URL) => {
-    const params = new URLSearchParams(url.searchParams);
-    params.delete("tab");
-    params.delete("category");
-    return params.toString();
-  };
-
-  const onlyTabChanged = stripTab(args.currentUrl) === stripTab(args.nextUrl);
-  if (onlyTabChanged && args.formMethod == null) {
-    return false;
   }
 
   return args.defaultShouldRevalidate;
@@ -118,12 +127,40 @@ export async function action(args: Route.ActionArgs) {
 
 export default function UserRoute() {
   const { id } = useParams();
-  const { links, categories } = useLoaderData<typeof loader>();
+  const { links: initialLinks, categories, nextCursor: initialNextCursor, listKey } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
+  const loadMoreFetcher = useFetcher<LinksPaginationData>();
+  const location = useLocation();
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
+  const wasSubmittingRef = useRef(false);
   const [searchParams] = useSearchParams();
-  const { empty } = useIntlayer("links");
+  const { common, empty } = useIntlayer("links");
+  const [links, setLinks] = useState(initialLinks);
+  const [nextCursor, setNextCursor] = useState(initialNextCursor);
+
+  useEffect(() => {
+    setLinks(initialLinks);
+    setNextCursor(initialNextCursor);
+  }, [initialLinks, initialNextCursor]);
+
+  useEffect(() => {
+    if (!loadMoreFetcher.data) return;
+    if (loadMoreFetcher.data.listKey !== listKey) return;
+
+    setLinks((prev) => {
+      const seen = new Set(prev.map((link) => link.id));
+      const merged = [...prev];
+      for (const link of loadMoreFetcher.data.links) {
+        if (!seen.has(link.id)) {
+          merged.push(link);
+        }
+      }
+      return merged;
+    });
+    setNextCursor(loadMoreFetcher.data.nextCursor);
+  }, [listKey, loadMoreFetcher.data]);
 
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -136,24 +173,26 @@ export default function UserRoute() {
   const activeTab: LinkView =
     searchParams.get("tab") === "favorites" ? "favorites" : "all";
 
-  const activeCategoryId = searchParams.get("category");
-  const filteredLinks = links
-    .filter((link) => (activeTab === "favorites" ? link.is_favorite : true))
-    .filter((link) =>
-      activeCategoryId ? link.category_id === activeCategoryId : true
-    );
-
-  const prevLinkCountRef = useRef(links.length);
-
   useEffect(() => {
-    if (links.length > prevLinkCountRef.current) {
+    if (navigation.state === "submitting") {
+      wasSubmittingRef.current = true;
+      return;
+    }
+
+    if (!wasSubmittingRef.current || navigation.state !== "idle") {
+      return;
+    }
+
+    if (!actionData) {
       formRef.current?.reset();
       document.getElementById("url")?.focus();
     }
-    prevLinkCountRef.current = links.length;
-  }, [links.length]);
+    wasSubmittingRef.current = false;
+  }, [actionData, navigation.state]);
 
   const isSubmitting = navigation.state === "submitting";
+  const isLoadingMore = loadMoreFetcher.state !== "idle";
+  const canLoadMore = Boolean(nextCursor);
 
   return (
     <div className="w-full max-w-7xl px-6 py-6">
@@ -168,7 +207,7 @@ export default function UserRoute() {
       <div className="mt-8">
         <LinksToolbar categories={categories} />
 
-        {filteredLinks.length === 0 ? (
+        {links.length === 0 ? (
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -188,20 +227,41 @@ export default function UserRoute() {
             <EmptyContent />
           </Empty>
         ) : (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
-            {filteredLinks.map((link) => (
-              <LinkItemCard
-                key={link.id}
-                link={link}
-                categories={categories}
-                categoryName={
-                  link.category_id
-                    ? (categoryNameById.get(link.category_id) ?? null)
-                    : null
-                }
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
+              {links.map((link) => (
+                <LinkItemCard
+                  key={link.id}
+                  link={link}
+                  categories={categories}
+                  categoryName={
+                    link.category_id
+                      ? (categoryNameById.get(link.category_id) ?? null)
+                      : null
+                  }
+                />
+              ))}
+            </div>
+            {canLoadMore ? (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isLoadingMore}
+                  onClick={() => {
+                    if (!nextCursor) return;
+                    const nextParams = new URLSearchParams(searchParams);
+                    nextParams.set("cursor", nextCursor);
+                    loadMoreFetcher.load(
+                      `${location.pathname}?${nextParams.toString()}`
+                    );
+                  }}
+                >
+                  {isLoadingMore ? common.loadingMore : common.loadMore}
+                </Button>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </div>
