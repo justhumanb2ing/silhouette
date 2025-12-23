@@ -7,6 +7,7 @@ import {
 import { Button } from "./ui/button";
 import { useIntlayer } from "react-intlayer";
 import { LocalizedLink } from "./localized-link";
+import { Separator } from "./ui/separator";
 
 export default function UserButton() {
   const {
@@ -14,7 +15,7 @@ export default function UserButton() {
       auth: { signIn, signUp },
     },
   } = useIntlayer("landing-page");
-  const { profile, signOut: signOutLabel } = useIntlayer("user-button");
+  const { signOut: signOutLabel } = useIntlayer("user-button");
 
   // Grab the `isLoaded` and `user` from useUser()
   const { isLoaded, user, isSignedIn } = useUser();
@@ -23,60 +24,42 @@ export default function UserButton() {
   // Make sure that the useUser() hook has loaded
   if (!isLoaded) return null;
 
-  return isSignedIn ? (
-    <>
-      <Button size={"icon"} className={"overflow-hidden"}>
-        <img
-          src={user?.imageUrl}
-          alt={user?.primaryEmailAddress?.emailAddress!}
-          width={30}
-          height={30}
-          className="object-cover w-full h-full"
-        />
-      </Button>
-      <LocalizedLink to={`/user/${user.id}`} className="text-sm">
-        {profile}
-      </LocalizedLink>
-      <Button variant={"ghost"} onClick={() => signOut()}>
-        {signOutLabel}
-      </Button>
-      <Button
-        variant="ghost"
-        className={"cursor-pointer"}
-        render={
-          <SignInButton>
-            <span>{signIn}</span>
-          </SignInButton>
-        }
-      />
-      <Button
-        className={"cursor-pointer"}
-        render={
-          <SignUpButton>
-            <span>{signUp}</span>
-          </SignUpButton>
-        }
-      />
-    </>
-  ) : (
-    <>
-      <Button
-        variant="ghost"
-        className={"cursor-pointer"}
-        render={
-          <SignInButton>
-            <span>{signIn}</span>
-          </SignInButton>
-        }
-      />
-      <Button
-        className={"cursor-pointer"}
-        render={
-          <SignUpButton>
-            <span>{signUp}</span>
-          </SignUpButton>
-        }
-      />
-    </>
+  return (
+    <aside className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 border border-input p-3 bg-muted/60 backdrop-blur-sm">
+      {isSignedIn ? (
+        <>
+          <LocalizedLink
+            to={`/user/${user.id}`}
+            className="text-sm flex items-center gap-1"
+          >
+            {user.fullName}
+          </LocalizedLink>
+          <Separator orientation="vertical" className={'my-1'} />
+          <Button variant={"ghost"} onClick={() => signOut()}>
+            {signOutLabel}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            variant="ghost"
+            className={"cursor-pointer"}
+            render={
+              <SignInButton>
+                <span>{signIn}</span>
+              </SignInButton>
+            }
+          />
+          <Button
+            className={"cursor-pointer"}
+            render={
+              <SignUpButton>
+                <span>{signUp}</span>
+              </SignUpButton>
+            }
+          />
+        </>
+      )}
+    </aside>
   );
 }

@@ -25,23 +25,5 @@ export default function LandingRoute() {
     footer,
   } = useIntlayer("landing-page");
 
-  return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full">
-        <div className="w-full px-6 h-16 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="font-anton text-xl uppercase tracking-tighter">
-              {logo}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <LocaleSwitcher />
-            <UserButton />
-          </div>
-        </div>
-      </header>
-    </div>
-  );
+  return <div className="min-h-screen"></div>;
 }

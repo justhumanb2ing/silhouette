@@ -37,7 +37,10 @@ import { handleCreateLink } from "../../service/links/actions/create-link.server
 import { handleDeleteLink } from "../../service/links/actions/delete-link.server";
 import { handleToggleFavorite } from "../../service/links/actions/toggle-favorite.server";
 import { handleUpdateLink } from "../../service/links/actions/update-link.server";
-import { listLinksForUser, type LinkListItem } from "../../service/links/links.server";
+import {
+  listLinksForUser,
+  type LinkListItem,
+} from "../../service/links/links.server";
 
 type ActionData = {
   fields?: {
@@ -81,7 +84,9 @@ export async function loader(args: Route.LoaderArgs) {
     favoritesOnly,
     categoryId,
   });
-  const categories = cursor ? [] : await listCategoriesForUser(prisma, auth.userId);
+  const categories = cursor
+    ? []
+    : await listCategoriesForUser(prisma, auth.userId);
   return data({ links, categories, nextCursor, listKey });
 }
 
@@ -127,8 +132,12 @@ export async function action(args: Route.ActionArgs) {
 
 export default function UserRoute() {
   const { id } = useParams();
-  const { links: initialLinks, categories, nextCursor: initialNextCursor, listKey } =
-    useLoaderData<typeof loader>();
+  const {
+    links: initialLinks,
+    categories,
+    nextCursor: initialNextCursor,
+    listKey,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const loadMoreFetcher = useFetcher<LinksPaginationData>();
   const location = useLocation();
