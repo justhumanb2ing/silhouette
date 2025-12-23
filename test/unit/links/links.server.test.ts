@@ -105,7 +105,7 @@ describe("links.server", () => {
         ],
       },
       orderBy: [{ created_at: "desc" }, { id: "desc" }],
-      take: 51,
+      take: 6,
       select: {
         id: true,
         url: true,
@@ -173,7 +173,7 @@ describe("links.server", () => {
     expect(received).toEqual({
       where: { user_id: "user_1", is_favorite: true, category_id: "cat_1" },
       orderBy: [{ created_at: "desc" }, { id: "desc" }],
-      take: 51,
+      take: 6,
       select: {
         id: true,
         url: true,

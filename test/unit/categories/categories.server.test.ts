@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import type { PrismaClient } from "../../../app/generated/prisma/client";
 import {
   createCategoryForUser,
+  deleteCategoriesForUser,
   deleteCategoryForUser,
   getOrCreateCategoryForUser,
   listCategoriesForUser,
@@ -180,5 +181,42 @@ describe("categories.server", () => {
     });
 
     expect(result).toEqual({ deleted: false });
+  });
+
+  it("deleteCategoriesForUser clears links and deletes categories", async () => {
+    let receivedLinksArgs: unknown = undefined;
+    let receivedCategoriesArgs: unknown = undefined;
+
+    const prisma = {
+      $transaction: async (runner: (tx: PrismaClient) => Promise<unknown>) =>
+        runner({
+          links: {
+            async updateMany(args: unknown) {
+              receivedLinksArgs = args;
+              return { count: 2 };
+            },
+          },
+          categories: {
+            async deleteMany(args: unknown) {
+              receivedCategoriesArgs = args;
+              return { count: 2 };
+            },
+          },
+        } as PrismaClient),
+    } as unknown as PrismaClient;
+
+    const result = await deleteCategoriesForUser(prisma, {
+      userId: "user_1",
+      categoryIds: ["cat_1", "cat_2"],
+    });
+
+    expect(result).toEqual({ deletedCount: 2 });
+    expect(receivedLinksArgs).toEqual({
+      where: { user_id: "user_1", category_id: { in: ["cat_1", "cat_2"] } },
+      data: { category_id: null, updated_at: expect.any(Date) },
+    });
+    expect(receivedCategoriesArgs).toEqual({
+      where: { id: { in: ["cat_1", "cat_2"] }, user_id: "user_1" },
+    });
   });
 });

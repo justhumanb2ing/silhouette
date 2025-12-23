@@ -15,7 +15,8 @@ export default function UserButton() {
       auth: { signIn, signUp },
     },
   } = useIntlayer("landing-page");
-  const { signOut: signOutLabel } = useIntlayer("user-button");
+  const { signOut: signOutLabel, settings: settingsLabel } =
+    useIntlayer("user-button");
 
   // Grab the `isLoaded` and `user` from useUser()
   const { isLoaded, user, isSignedIn } = useUser();
@@ -25,7 +26,7 @@ export default function UserButton() {
   if (!isLoaded) return null;
 
   return (
-    <aside className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 border border-input p-3 bg-muted/60 backdrop-blur-sm">
+    <aside className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 border border-input p-3 bg-white backdrop-blur-sm py-2">
       {isSignedIn ? (
         <>
           <LocalizedLink
@@ -34,7 +35,16 @@ export default function UserButton() {
           >
             {user.fullName}
           </LocalizedLink>
-          <Separator orientation="vertical" className={'my-1'} />
+          <Separator orientation="vertical" className="my-1" />
+          <Button
+            variant="ghost"
+            render={
+              <LocalizedLink to={`/user/${user.id}/settings`}>
+                {settingsLabel}
+              </LocalizedLink>
+            }
+          />
+          <Separator orientation="vertical" className="my-1" />
           <Button variant={"ghost"} onClick={() => signOut()}>
             {signOutLabel}
           </Button>

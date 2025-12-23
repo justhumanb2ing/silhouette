@@ -81,7 +81,7 @@ export async function listLinksForUser(
 
   const hasMore = result.length > pageSize;
   const links = hasMore ? result.slice(0, pageSize) : result;
-  const nextCursor = hasMore ? links.at(-1)?.id ?? null : null;
+  const nextCursor = hasMore ? (links.at(-1)?.id ?? null) : null;
 
   return { links, nextCursor };
 }

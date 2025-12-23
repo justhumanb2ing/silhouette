@@ -55,6 +55,29 @@ export async function deleteCategoryForUser(
 }
 
 /**
+ * 여러 카테고리를 삭제하고 연결된 링크의 카테고리를 해제한다.
+ */
+export async function deleteCategoriesForUser(
+  prisma: PrismaClient,
+  input: { userId: string; categoryIds: string[] }
+): Promise<{ deletedCount: number }> {
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.links.updateMany({
+      where: { user_id: input.userId, category_id: { in: input.categoryIds } },
+      data: { category_id: null, updated_at: new Date() },
+    });
+
+    const deleted = await tx.categories.deleteMany({
+      where: { id: { in: input.categoryIds }, user_id: input.userId },
+    });
+
+    return { deletedCount: deleted.count };
+  });
+
+  return result;
+}
+
+/**
  * 입력된 이름으로 카테고리를 가져오거나(존재하면) 생성한다.
  * - 이름은 trim 후 저장한다.
  * - 유니크 충돌은 "이미 생성됨"으로 처리한다.
