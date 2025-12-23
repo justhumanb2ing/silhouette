@@ -84,17 +84,16 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
           </Button>
         </DrawerTrigger>
 
-        <DrawerContent className="rounded-lg">
-          <div className="mx-auto w-full max-w-sm py-2 lg:py-6">
+        <DrawerContent className="rounded-lg mb-8 px-4">
+          <div className="mx-auto w-full max-w-lg py-2">
             <Form ref={ref} method="post" className="flex flex-col gap-4">
               <DrawerHeader className="pb-2 md:text-left">
-                <DrawerTitle className="font-medium text-xl">
+                <DrawerTitle hidden className="font-medium text-xl">
                   {title}
                 </DrawerTitle>
               </DrawerHeader>
 
               <Field>
-                <FieldLabel htmlFor="url">{fields.urlLabel}</FieldLabel>
                 <FieldContent>
                   <Input
                     id="url"
@@ -112,7 +111,6 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
               </Field>
 
               <Field>
-                <FieldLabel>{fields.categoryLabel}</FieldLabel>
                 <FieldContent className="flex flex-col gap-2">
                   <input
                     type="hidden"
@@ -140,8 +138,7 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
                     <Button
                       type="button"
                       variant="ghost"
-                      size={"sm"}
-                      className={"rounded-md text-xs"}
+                      className={"text-xs"}
                       onClick={() => {
                         setIsCreatingNewCategory((prev) => !prev);
                         setNewCategoryName("");
