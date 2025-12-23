@@ -39,10 +39,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import type { LinkListItem } from "../../../service/links/links.server";
 import { Badge } from "../ui/badge";
-import {
-  ArrowSquareOutIcon,
-  HeartIcon,
-} from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, HeartIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 type IntentResult = { ok: true } | { ok: false; message: string };
@@ -235,6 +232,7 @@ export function LinkItemCard({
                   placeholder={item.editDialog.placeholders.description.value}
                   value={draftDescription}
                   onChange={(event) => setDraftDescription(event.target.value)}
+                  className="resize-none min-h-24 max-h-60"
                 />
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
