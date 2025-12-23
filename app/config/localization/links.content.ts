@@ -41,6 +41,14 @@ const linksContent = {
         ko: "카테고리 필터",
       }),
       allCategories: t({ en: "All categories", ko: "전체 카테고리" }),
+      categoryDelete: {
+        ariaLabel: t({ en: "Delete category", ko: "카테고리 삭제" }),
+        title: t({ en: "Delete this category?", ko: "카테고리를 삭제할까요?" }),
+        description: t({
+          en: "Links in this category will be moved to No category.",
+          ko: "이 카테고리에 속한 링크는 카테고리 없음으로 이동합니다.",
+        }),
+      },
     },
     empty: {
       title: {

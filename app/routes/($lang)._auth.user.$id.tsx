@@ -29,6 +29,7 @@ import { LinksToolbar } from "@/components/links/links-toolbar";
 import { getPrisma } from "@/lib/get-prisma";
 
 import { listCategoriesForUser } from "../../service/categories/categories.server";
+import { handleDeleteCategory } from "../../service/categories/actions/delete-category.server";
 import { handleCreateLink } from "../../service/links/actions/create-link.server";
 import { handleDeleteLink } from "../../service/links/actions/delete-link.server";
 import { handleToggleFavorite } from "../../service/links/actions/toggle-favorite.server";
@@ -68,6 +69,11 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
     return args.defaultShouldRevalidate;
   }
 
+  const sameSearch = args.currentUrl.search === args.nextUrl.search;
+  if (sameSearch && args.formMethod == null) {
+    return true;
+  }
+
   const stripTab = (url: URL) => {
     const params = new URLSearchParams(url.searchParams);
     params.delete("tab");
@@ -101,6 +107,8 @@ export async function action(args: Route.ActionArgs) {
       return handleToggleFavorite({ auth, formData });
     case "delete-link":
       return handleDeleteLink({ auth, formData });
+    case "delete-category":
+      return handleDeleteCategory({ auth, formData });
     case "update-link":
       return handleUpdateLink({ auth, formData });
     default:

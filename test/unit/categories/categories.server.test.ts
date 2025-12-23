@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import type { PrismaClient } from "../../../app/generated/prisma/client";
 import {
   createCategoryForUser,
+  deleteCategoryForUser,
   getOrCreateCategoryForUser,
   listCategoriesForUser,
 } from "../../../service/categories/categories.server";
@@ -118,5 +119,66 @@ describe("categories.server", () => {
     expect(result).toEqual({ id: "cat_1" });
     expect(createCount).toBe(1);
   });
-});
 
+  it("deleteCategoryForUser clears links and deletes category", async () => {
+    let receivedLinksArgs: unknown = undefined;
+    let receivedCategoriesArgs: unknown = undefined;
+
+    const prisma = {
+      $transaction: async (runner: (tx: PrismaClient) => Promise<unknown>) =>
+        runner({
+          links: {
+            async updateMany(args: unknown) {
+              receivedLinksArgs = args;
+              return { count: 2 };
+            },
+          },
+          categories: {
+            async deleteMany(args: unknown) {
+              receivedCategoriesArgs = args;
+              return { count: 1 };
+            },
+          },
+        } as PrismaClient),
+    } as unknown as PrismaClient;
+
+    const result = await deleteCategoryForUser(prisma, {
+      userId: "user_1",
+      categoryId: "cat_1",
+    });
+
+    expect(result).toEqual({ deleted: true });
+    expect(receivedLinksArgs).toEqual({
+      where: { user_id: "user_1", category_id: "cat_1" },
+      data: { category_id: null, updated_at: expect.any(Date) },
+    });
+    expect(receivedCategoriesArgs).toEqual({
+      where: { id: "cat_1", user_id: "user_1" },
+    });
+  });
+
+  it("deleteCategoryForUser returns deleted false when missing", async () => {
+    const prisma = {
+      $transaction: async (runner: (tx: PrismaClient) => Promise<unknown>) =>
+        runner({
+          links: {
+            async updateMany() {
+              return { count: 0 };
+            },
+          },
+          categories: {
+            async deleteMany() {
+              return { count: 0 };
+            },
+          },
+        } as PrismaClient),
+    } as unknown as PrismaClient;
+
+    const result = await deleteCategoryForUser(prisma, {
+      userId: "user_1",
+      categoryId: "cat_1",
+    });
+
+    expect(result).toEqual({ deleted: false });
+  });
+});
