@@ -133,7 +133,7 @@ export function LinkItemCard({
               alt={link.title ?? link.url}
               loading="lazy"
               decoding="async"
-              className="h-40 w-full object-cover"
+              className="h-40 w-full object-cover hover:scale-110 transition-all duration-500"
             />
           ) : (
             <div className="bg-muted/60 text-muted-foreground flex h-40 w-full items-center justify-center">

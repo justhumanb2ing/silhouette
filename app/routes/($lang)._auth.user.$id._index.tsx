@@ -20,7 +20,6 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,11 @@ import {
   listLinksForUser,
   type LinkListItem,
 } from "../../service/links/links.server";
+import Logo from "@/components/logo";
+import LocaleSwitcher from "@/components/locale-switcher";
+import { useClerk, useUser } from "@clerk/react-router";
+import { LocalizedLink } from "@/components/localized-link";
+import { FadersIcon, SealCheckIcon, SignOutIcon } from "@phosphor-icons/react";
 
 type ActionData = {
   fields?: {
@@ -113,8 +117,10 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
     if (args.nextUrl.searchParams.has(CURSOR_PARAM)) {
       return true;
     }
-    return getListKey(args.currentUrl.searchParams) !==
-      getListKey(args.nextUrl.searchParams);
+    return (
+      getListKey(args.currentUrl.searchParams) !==
+      getListKey(args.nextUrl.searchParams)
+    );
   }
 
   return args.defaultShouldRevalidate;
@@ -164,6 +170,8 @@ export default function UserRoute() {
   const { common, empty } = useIntlayer("links");
   const [links, setLinks] = useState(initialLinks);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
+  const { user } = useUser();
+  const { signOut } = useClerk();
 
   useEffect(() => {
     setLinks(initialLinks);
@@ -231,77 +239,102 @@ export default function UserRoute() {
   }, [searchParams]);
 
   return (
-    <div className="w-full px-6 py-6 h-full">
-      <AddLinkCard
-        ref={formRef}
-        userId={id}
-        categories={categories}
-        actionData={actionData}
-        isSubmitting={isSubmitting}
-      />
+    <div className="w-full h-full relative">
+      <header className="sticky top-0 z-50 w-full bg-white/50 backdrop-blur-sm">
+        <div className="w-full px-6 h-16 flex justify-between items-center">
+          <Logo />
+          <div className="font-medium flex items-center gap-1">
+            <SealCheckIcon weight="fill" className="fill-blue-500" />
+            {user?.fullName}
+          </div>
+          <div className="flex items-center gap-4">
+            <LocaleSwitcher />
+          </div>
+        </div>
+      </header>
+      <section className="px-6 mt-8 h-full">
+        <div className="fixed bottom-5 right-5 2xl:right-1/6 flex flex-col-reverse gap-2">
+          <AddLinkCard
+            ref={formRef}
+            userId={id}
+            categories={categories}
+            actionData={actionData}
+            isSubmitting={isSubmitting}
+          />
+          <Button className={"size-10 z-50 hover:bg-primary/80"}>
+            <LocalizedLink to={`/user/${id}/settings`}>
+              <FadersIcon />
+            </LocalizedLink>
+          </Button>
+          <Button
+            variant={"destructive"}
+            className={"size-10 z-50"}
+            onClick={() => signOut()}
+          >
+            <SignOutIcon />
+          </Button>
+        </div>
 
-      <div className="mt-8">
-        <LinksToolbar categories={categories} />
+        <div className="mt-8">
+          <LinksToolbar categories={categories} />
 
-        {links.length === 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ExternalLink />
-              </EmptyMedia>
-              <EmptyTitle>
-                {activeTab === "favorites"
-                  ? empty.title.favorites
-                  : empty.title.all}
-              </EmptyTitle>
-              <EmptyDescription>
-                {activeTab === "favorites"
-                  ? empty.description.favorites
-                  : empty.description.all}
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent />
-          </Empty>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
-              {links.map((link) => (
-                <LinkItemCard
-                  key={link.id}
-                  link={link}
-                  categories={categories}
-                  categoryName={
-                    link.category_id
-                      ? (categoryNameById.get(link.category_id) ?? null)
-                      : null
-                  }
-                />
-              ))}
-            </div>
-            {canLoadMore ? (
-              <div className="mt-4 flex justify-center">
-                <loadMoreFetcher.Form method="get" action=".">
-                  {loadMoreParams.map(([key, value]) => (
-                    <input key={key} type="hidden" name={key} value={value} />
-                  ))}
-                  <input
-                    type="hidden"
-                    name={CURSOR_PARAM}
-                    value={nextCursor ?? ""}
+          {links.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>
+                  {activeTab === "favorites"
+                    ? empty.title.favorites
+                    : empty.title.all}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {activeTab === "favorites"
+                    ? empty.description.favorites
+                    : empty.description.all}
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent />
+            </Empty>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
+                {links.map((link) => (
+                  <LinkItemCard
+                    key={link.id}
+                    link={link}
+                    categories={categories}
+                    categoryName={
+                      link.category_id
+                        ? (categoryNameById.get(link.category_id) ?? null)
+                        : null
+                    }
                   />
-                  <Button
-                    type="submit"
-                    variant="outline"
-                    disabled={isLoadingMore}
-                  >
-                    {isLoadingMore ? common.loadingMore : common.loadMore}
-                  </Button>
-                </loadMoreFetcher.Form>
+                ))}
               </div>
-            ) : null}
-          </>
-        )}
-      </div>
+              {canLoadMore ? (
+                <div className="mt-4 flex justify-center">
+                  <loadMoreFetcher.Form method="get" action=".">
+                    {loadMoreParams.map(([key, value]) => (
+                      <input key={key} type="hidden" name={key} value={value} />
+                    ))}
+                    <input
+                      type="hidden"
+                      name={CURSOR_PARAM}
+                      value={nextCursor ?? ""}
+                    />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      disabled={isLoadingMore}
+                    >
+                      {isLoadingMore ? common.loadingMore : common.loadMore}
+                    </Button>
+                  </loadMoreFetcher.Form>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

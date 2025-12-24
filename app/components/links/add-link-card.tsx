@@ -12,16 +12,13 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  Field,
-  FieldContent,
-  FieldError,
-} from "@/components/ui/field";
+import { Field, FieldContent, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import { PlusIcon } from "@phosphor-icons/react";
 
 type ActionDataLike = {
   fields?: { url?: string };
@@ -76,8 +73,9 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
     return (
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
-          <Button className="w-full" size="lg">
-            {trigger}
+          <Button className={"size-10 z-50 hover:bg-primary/80"}>
+            {/* {trigger} */}
+            <PlusIcon />
           </Button>
         </DrawerTrigger>
 

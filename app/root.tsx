@@ -77,7 +77,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
       }}
     >
       <Providers>
-        <main className="h-dvh flex flex-col bg-muted/30">
+        <main className="h-dvh flex flex-col">
           <section className="grow">
             <Outlet />
           </section>
