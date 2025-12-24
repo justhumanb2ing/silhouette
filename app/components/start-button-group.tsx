@@ -21,10 +21,10 @@ export default function StartButtonGroup() {
   return (
     <div className="flex items-center gap-2">
       <a href={signInHref}>
-        <Button variant={"ghost"}>{signIn}</Button>
+        <Button variant={"ghost"} className={'px-6 py-4 text-sm'}>{signIn}</Button>
       </a>
       <a href={signUpHref}>
-        <Button>{signUp}</Button>
+        <Button className={'px-6 py-4 text-sm'}>{signUp}</Button>
       </a>
     </div>
   );

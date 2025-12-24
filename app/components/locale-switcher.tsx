@@ -44,7 +44,7 @@ export default function LocaleSwitcher() {
             }
           </SelectValue>
         </SelectTrigger>
-        <SelectContent align="end" className={"p-2 shadow-xs"}>
+        <SelectContent align="end" sideOffset={12} className={"p-2 shadow-xs"}>
           {availableLocales.map((localeItem) => {
             const label = getLocaleName(localeItem);
 

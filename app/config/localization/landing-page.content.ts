@@ -24,8 +24,8 @@ const landingPageContent = {
       ko: "링크를 빠르게 저장하고 더 빠르게 찾으세요",
     }),
     description: t({
-      en: "Silhouette keeps saving, organizing, searching, and sharing frictionless.",
-      ko: "Silhouette로 저장·정리·검색·공유를 부드럽게 이어가세요.",
+      en: "Keeps saving and searching frictionless.",
+      ko: "저장·검색을 부드럽게 이어가세요.",
     }),
     aboutLink: t({
       en: "Product overview",
