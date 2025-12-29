@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AddLinkCard } from "@/components/links/add-link-card";
 import { LinkItemCard } from "@/components/links/link-item-card";
+import { LinkItemSkeleton } from "@/components/links/link-item-skeleton";
 import { LinksToolbar } from "@/components/links/links-toolbar";
 
 import { getPrisma } from "@/lib/get-prisma";
@@ -170,6 +171,7 @@ export default function UserRoute() {
   const { common, empty } = useIntlayer("links");
   const [links, setLinks] = useState(initialLinks);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
+  const [isCreatingLink, setIsCreatingLink] = useState(false);
   const { user } = useUser();
   const { signOut } = useClerk();
 
@@ -206,6 +208,23 @@ export default function UserRoute() {
 
   const activeTab: LinkView =
     searchParams.get("tab") === "favorites" ? "favorites" : "all";
+
+  const isCreateSubmission =
+    navigation.state === "submitting" &&
+    (navigation.formMethod ?? "").toLowerCase() === "post" &&
+    typeof navigation.formData?.get("url") === "string" &&
+    navigation.formData?.get("intent") == null;
+
+  useEffect(() => {
+    if (isCreateSubmission) {
+      setIsCreatingLink(true);
+      return;
+    }
+
+    if (navigation.state === "idle") {
+      setIsCreatingLink(false);
+    }
+  }, [isCreateSubmission, navigation.state]);
 
   useEffect(() => {
     if (navigation.state === "submitting") {
@@ -278,7 +297,7 @@ export default function UserRoute() {
         <div className="mt-8">
           <LinksToolbar categories={categories} />
 
-          {links.length === 0 ? (
+          {links.length === 0 && !isCreatingLink ? (
             <Empty>
               <EmptyHeader>
                 <EmptyTitle>
@@ -297,6 +316,7 @@ export default function UserRoute() {
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
+                {isCreatingLink ? <LinkItemSkeleton /> : null}
                 {links.map((link) => (
                   <LinkItemCard
                     key={link.id}

@@ -175,7 +175,7 @@ export function LinkItemCard({
           </favoriteFetcher.Form>
         </aside>
       </ItemMedia>
-      <ItemContent className="relative p-3">
+      <ItemContent className="relative py-2">
         <ItemTitle className="line-clamp-2 wrap-break-word font-medium text-sm leading-snug">
           {displayTitle}
         </ItemTitle>
@@ -183,7 +183,7 @@ export function LinkItemCard({
           {displayDescription}
         </ItemDescription>
       </ItemContent>
-      <ItemActions className="justify-between p-2">
+      <ItemActions className="justify-between">
         {categoryName ? (
           <Badge variant={"secondary"}>{categoryName}</Badge>
         ) : null}

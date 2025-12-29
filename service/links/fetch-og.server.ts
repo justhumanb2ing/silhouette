@@ -75,7 +75,7 @@ export async function fetchOgMetadataForUrl(input: {
     "/crawl",
     crawlerBaseUrl
   ).toString();
-  const response = await fetch(endpoint, {
+  const response = await fetch("https://silhouette-crawler-server.up.railway.app/crawl", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

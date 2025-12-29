@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Form } from "react-router";
 import { useIntlayer } from "react-intlayer";
 
@@ -33,10 +33,14 @@ type AddLinkCardProps = {
   categories: CategoryListItem[];
   actionData: ActionDataLike | undefined;
   isSubmitting: boolean;
+  onCreateStart?: () => void;
 };
 
 export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
-  function AddLinkCard({ userId, categories, actionData, isSubmitting }, ref) {
+  function AddLinkCard(
+    { userId, categories, actionData, isSubmitting, onCreateStart },
+    ref
+  ) {
     const {
       common,
       addLink: { trigger, title, fields, category, newCategory },
@@ -45,23 +49,20 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
     const hasErrors = Boolean(
       actionData?.fieldErrors?.url || actionData?.formError
     );
-    const [open, setOpen] = useState(hasErrors);
-    const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState("");
-    const wasSubmittingRef = useRef(false);
+  const [open, setOpen] = useState(hasErrors);
+  const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
-    useEffect(() => {
-      if (hasErrors) {
-        setOpen(true);
-      }
-    }, [hasErrors]);
+  useEffect(() => {
+    if (isSubmitting) {
+      setOpen(false);
+      return;
+    }
 
-    useEffect(() => {
-      if (wasSubmittingRef.current && !isSubmitting && !hasErrors) {
-        setOpen(false);
-      }
-      wasSubmittingRef.current = isSubmitting;
-    }, [hasErrors, isSubmitting]);
+    if (hasErrors) {
+      setOpen(true);
+    }
+  }, [hasErrors, isSubmitting]);
 
     useEffect(() => {
       if (!open) {
@@ -81,7 +82,15 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
 
         <DrawerContent className="rounded-lg mb-8 px-4">
           <div className="mx-auto w-full max-w-lg py-2">
-            <Form ref={ref} method="post" className="flex flex-col gap-4">
+            <Form
+              ref={ref}
+              method="post"
+              className="flex flex-col gap-4"
+              onSubmit={() => {
+                setOpen(false);
+                onCreateStart?.();
+              }}
+            >
               <DrawerHeader className="pb-2 md:text-left">
                 <DrawerTitle hidden className="font-medium text-xl">
                   {title}
