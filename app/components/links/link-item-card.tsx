@@ -119,12 +119,12 @@ export function LinkItemCard({
       size="sm"
       className="ring-0 flex flex-col items-stretch gap-2 overflow-hidden p-1 rounded-none"
     >
-      <ItemMedia className="relative w-full">
+      <ItemMedia className="relative w-full -mt-1">
         <a
           href={link.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-block w-full overflow-hidden"
+          className="inline-block w-full overflow-hidden h-44"
           aria-label={item.aria.open.value}
         >
           {link.image_url ? (
@@ -133,7 +133,7 @@ export function LinkItemCard({
               alt={link.title ?? link.url}
               loading="lazy"
               decoding="async"
-              className="h-40 w-full object-cover hover:scale-110 transition-all duration-500"
+              className="h-full w-full object-cover hover:scale-110 transition-all duration-500"
             />
           ) : (
             <div className="bg-muted/60 text-muted-foreground flex h-40 w-full items-center justify-center">
@@ -175,7 +175,7 @@ export function LinkItemCard({
           </favoriteFetcher.Form>
         </aside>
       </ItemMedia>
-      <ItemContent className="relative">
+      <ItemContent className="relative p-3">
         <ItemTitle className="line-clamp-2 wrap-break-word font-medium text-sm leading-snug">
           {displayTitle}
         </ItemTitle>
@@ -183,7 +183,7 @@ export function LinkItemCard({
           {displayDescription}
         </ItemDescription>
       </ItemContent>
-      <ItemActions className="justify-between">
+      <ItemActions className="justify-between p-2">
         {categoryName ? (
           <Badge variant={"secondary"}>{categoryName}</Badge>
         ) : null}

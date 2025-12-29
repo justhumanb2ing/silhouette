@@ -239,7 +239,7 @@ export default function UserRoute() {
   }, [searchParams]);
 
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full h-full max-w-7xl relative">
       <header className="sticky top-0 z-50 w-full bg-white/50 backdrop-blur-sm">
         <div className="w-full px-6 h-16 flex justify-between items-center">
           <Logo />
