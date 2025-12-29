@@ -25,7 +25,7 @@ type LinkListOptions = {
   categoryId?: string | null;
 };
 
-const DEFAULT_LINKS_PAGE_SIZE = 5;
+const DEFAULT_LINKS_PAGE_SIZE = 10;
 const MAX_LINKS_PAGE_SIZE = 100;
 
 /**

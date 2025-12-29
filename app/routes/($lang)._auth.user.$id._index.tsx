@@ -253,7 +253,7 @@ export default function UserRoute() {
         </div>
       </header>
       <section className="px-6 mt-8 h-full">
-        <div className="fixed bottom-5 right-5 2xl:right-1/6 flex flex-col-reverse gap-2">
+        <div className="fixed bottom-5 right-5 2xl:right-1/6 flex flex-col-reverse gap-2 z-50">
           <AddLinkCard
             ref={formRef}
             userId={id}
