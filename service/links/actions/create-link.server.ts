@@ -113,7 +113,7 @@ export async function handleCreateLink({
       const token = await auth.getToken();
 
       const ogPromise: Promise<CreateLinkOgResult> = token
-        ? fetchOgViaEdgeFunction({ url, token })
+        ? fetchOgMetadataForUrl({ url, token })
         : Promise.resolve(
             createOgFailure("OG 요청 토큰을 가져오지 못했습니다.")
           );
