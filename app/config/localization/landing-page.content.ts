@@ -15,8 +15,8 @@ const landingPageContent = {
         }),
       },
       logo: t({
-        en: "Silhouette",
-        ko: "Silhouette",
+        en: "Poketto",
+        ko: "Poketto",
       }),
     },
     title: t({
@@ -86,7 +86,7 @@ const landingPageContent = {
             ko: "읽기 전용 공유 링크를 만들고, 가져오기/내보내기로 빠르게 옮겨보세요.",
           }),
         },
-      ]
+      ],
     },
     workflow: {
       title: t({
@@ -102,8 +102,8 @@ const landingPageContent = {
     },
     usage: {
       title: t({
-        en: "Use Silhouette your way",
-        ko: "Silhouette를 이렇게 사용하세요",
+        en: "Use Poketto your way",
+        ko: "Poketto를 이렇게 사용하세요",
       }),
       list: [
         {
@@ -122,18 +122,18 @@ const landingPageContent = {
             ko: "브라우저 PWA",
           }),
           desc: t({
-            en: "Install Silhouette as a PWA and keep your links a tap away on desktop and mobile.",
-            ko: "Silhouette를 PWA로 설치해 데스크톱과 모바일에서 한 번의 탭으로 열어보세요.",
+            en: "Install Poketto as a PWA and keep your links a tap away on desktop and mobile.",
+            ko: "Poketto를 PWA로 설치해 데스크톱과 모바일에서 한 번의 탭으로 열어보세요.",
           }),
         },
       ],
     },
     footer: {
       copyright: t({
-        en: "© 2025 Silhouette. Save simply, find instantly.",
-        ko: "© 2025 Silhouette. 단순하게 저장하고, 즉시 찾으세요.",
+        en: "© 2025 Poketto. Save simply, find instantly.",
+        ko: "© 2025 Poketto. Save simply, find instantly.",
       }),
-    }
+    },
   },
 } satisfies Dictionary;
 

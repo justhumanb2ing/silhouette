@@ -17,11 +17,11 @@ import Footer from "@/components/footer";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Silhouette - Save links fast, find them faster" },
+    { title: "Poketto - Save links fast, find them faster" },
     {
       name: "description",
       content:
-        "Silhouette keeps saving, organizing, searching, and sharing frictionless.",
+        "Poketto keeps saving, organizing, searching, and sharing frictionless.",
     },
   ];
 }

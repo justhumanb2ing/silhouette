@@ -26,6 +26,11 @@ import { AddLinkCard } from "@/components/links/add-link-card";
 import { LinkItemCard } from "@/components/links/link-item-card";
 import { LinkItemSkeleton } from "@/components/links/link-item-skeleton";
 import { LinksToolbar } from "@/components/links/links-toolbar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { getPrisma } from "@/lib/get-prisma";
 
@@ -50,6 +55,7 @@ import {
   SealCheckIcon,
   SignOutIcon,
 } from "@phosphor-icons/react";
+import Footer from "@/components/footer";
 
 type ActionData = {
   fields?: {
@@ -300,27 +306,64 @@ export default function UserRoute() {
             actionData={actionData}
             isSubmitting={isSubmitting}
           />
-          <Button
-            type="button"
-            className="size-10 z-50 hover:bg-primary/80"
-            onClick={handleAddFromClipboard}
-            disabled={isSubmitting || isAddingFromClipboard}
-            aria-label="클립보드 링크 추가"
-          >
-            <ClipboardTextIcon />
-          </Button>
-          <Button className={"size-10 z-50 hover:bg-primary/80"}>
-            <LocalizedLink to={`/user/${id}/settings`}>
-              <FadersIcon />
-            </LocalizedLink>
-          </Button>
-          <Button
-            variant={"destructive"}
-            className={"size-10 z-50"}
-            onClick={() => signOut()}
-          >
-            <SignOutIcon />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={(triggerProps) => (
+                <Button
+                  {...triggerProps}
+                  type="button"
+                  className="size-10 z-50 hover:bg-primary/80"
+                  onClick={(event) => {
+                    triggerProps.onClick?.(event);
+                    handleAddFromClipboard();
+                  }}
+                  disabled={isSubmitting || isAddingFromClipboard}
+                >
+                  <ClipboardTextIcon />
+                </Button>
+              )}
+            />
+            <TooltipContent side="left">
+              {common.tooltips.addFromClipboard}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={(triggerProps) => (
+                <Button
+                  {...triggerProps}
+                  className="size-10 z-50 hover:bg-primary/80"
+                >
+                  <LocalizedLink to={`/user/${id}/settings`}>
+                    <FadersIcon />
+                  </LocalizedLink>
+                </Button>
+              )}
+            />
+            <TooltipContent side="left">
+              {common.tooltips.settings}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={(triggerProps) => (
+                <Button
+                  {...triggerProps}
+                  variant="destructive"
+                  className="size-10 z-50"
+                  onClick={(event) => {
+                    triggerProps.onClick?.(event);
+                    signOut();
+                  }}
+                >
+                  <SignOutIcon />
+                </Button>
+              )}
+            />
+            <TooltipContent side="left">
+              {common.tooltips.signOut}
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="mt-8">
@@ -384,6 +427,7 @@ export default function UserRoute() {
           )}
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

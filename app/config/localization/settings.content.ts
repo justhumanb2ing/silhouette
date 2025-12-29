@@ -33,6 +33,27 @@ const settingsContent = {
         }),
       },
     },
+    account: {
+      title: t({ en: "Account deletion", ko: "회원 탈퇴" }),
+      description: t({
+        en: "Delete your account and sign out immediately.",
+        ko: "계정을 삭제하면 즉시 로그아웃됩니다.",
+      }),
+      warning: t({
+        en: "This action cannot be undone.",
+        ko: "이 작업은 되돌릴 수 없습니다.",
+      }),
+      deleteTrigger: t({ en: "Delete account", ko: "회원 탈퇴" }),
+      deleteDialog: {
+        title: t({ en: "Delete your account?", ko: "계정을 삭제할까요?" }),
+        description: t({
+          en: "You won't be able to restore your data once the account is deleted.",
+          ko: "계정 삭제 후에는 데이터를 복구할 수 없습니다.",
+        }),
+        confirmLabel: t({ en: "Delete account", ko: "계정 삭제" }),
+      },
+      deleting: t({ en: "Deleting account...", ko: "탈퇴 처리 중..." }),
+    },
     common: {
       cancel: t({ en: "Cancel", ko: "취소" }),
       delete: t({ en: "Delete", ko: "삭제" }),

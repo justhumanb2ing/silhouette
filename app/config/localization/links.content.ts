@@ -12,6 +12,14 @@ const linksContent = {
       deleting: t({ en: "Deleting...", ko: "삭제 중..." }),
       loadMore: t({ en: "Load more", ko: "더보기" }),
       loadingMore: t({ en: "Loading...", ko: "불러오는 중..." }),
+      tooltips: {
+        addFromClipboard: t({
+          en: "Add from clipboard",
+          ko: "클립보드 링크 추가",
+        }),
+        settings: t({ en: "Settings", ko: "설정" }),
+        signOut: t({ en: "Sign out", ko: "로그아웃" }),
+      },
     },
     addLink: {
       trigger: t({ en: "Add link", ko: "링크 추가" }),

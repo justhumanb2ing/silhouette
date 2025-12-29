@@ -1,10 +1,17 @@
+import { useIntlayer } from "react-intlayer";
+
 export default function Footer() {
+  const {
+    layout: { logo },
+    footer: { copyright },
+  } = useIntlayer("landing-page");
+
   return (
     <footer className="py-20 md:py-32 bg-background relative overflow-hidden border-t border-border/40">
       <div className="container mx-auto px-6 flex flex-col items-center">
         <div className="mb-6 select-none">
           <span className="text-4xl font-black italic tracking-tighter">
-            Poketto
+            {logo}
           </span>
         </div>
 
@@ -41,9 +48,7 @@ export default function Footer() {
           </a>
         </div>
 
-        <p className="text-sm text-muted-foreground/60">
-          © 2025 Logo by Plain Sight Ventures
-        </p>
+        <p className="text-sm text-muted-foreground/60">{copyright}</p>
       </div>
 
       {/* Decorative Shapes */}

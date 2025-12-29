@@ -18,6 +18,11 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PlusIcon } from "@phosphor-icons/react";
 
 type ActionDataLike = {
@@ -69,12 +74,21 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
 
     return (
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          <Button className={"size-10 z-50 hover:bg-primary/80"}>
-            {/* {trigger} */}
-            <PlusIcon />
-          </Button>
-        </DrawerTrigger>
+        <Tooltip>
+          <TooltipTrigger
+            render={(triggerProps) => (
+              <DrawerTrigger asChild>
+                <Button
+                  {...triggerProps}
+                  className="size-10 z-50 hover:bg-primary/80"
+                >
+                  <PlusIcon />
+                </Button>
+              </DrawerTrigger>
+            )}
+          />
+          <TooltipContent side="left">{trigger}</TooltipContent>
+        </Tooltip>
 
         <DrawerContent className="rounded-lg mb-8 px-4">
           <div className="mx-auto w-full max-w-lg py-2">
