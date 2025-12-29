@@ -127,10 +127,16 @@ export default function LandingRoute() {
 
               <Button
                 size={"lg"}
-                className={"w-full px-6 py-6 text-lg font-bold"}
+                className={"w-full px-6 py-6 font-bold"}
+                disabled
               >
                 <GoogleChromeLogoIcon className="size-5" />
-                Install Extension
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="text-lg line-through">Install Extension</span>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Comming Soon
+                  </span>
+                </span>
               </Button>
             </div>
 
