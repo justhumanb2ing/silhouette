@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="container mx-auto px-6 flex flex-col items-center">
         <div className="mb-6 select-none">
           <span className="text-4xl font-black italic tracking-tighter">
-            Logo
+            Poketto
           </span>
         </div>
 

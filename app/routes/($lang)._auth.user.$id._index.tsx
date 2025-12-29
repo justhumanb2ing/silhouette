@@ -1,5 +1,4 @@
 import { getAuth } from "@clerk/react-router/server";
-import { ExternalLink } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useIntlayer } from "react-intlayer";
 import {
@@ -40,11 +39,17 @@ import {
   listLinksForUser,
   type LinkListItem,
 } from "../../service/links/links.server";
+import { normalizeLinkUrl } from "../../service/links/utils/normalize-link-url";
 import Logo from "@/components/logo";
 import LocaleSwitcher from "@/components/locale-switcher";
 import { useClerk, useUser } from "@clerk/react-router";
 import { LocalizedLink } from "@/components/localized-link";
-import { FadersIcon, SealCheckIcon, SignOutIcon } from "@phosphor-icons/react";
+import {
+  ClipboardTextIcon,
+  FadersIcon,
+  SealCheckIcon,
+  SignOutIcon,
+} from "@phosphor-icons/react";
 
 type ActionData = {
   fields?: {
@@ -164,6 +169,7 @@ export default function UserRoute() {
   } = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const loadMoreFetcher = useFetcher<LinksPaginationData>();
+  const createLinkFetcher = useFetcher();
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const wasSubmittingRef = useRef(false);
@@ -171,7 +177,6 @@ export default function UserRoute() {
   const { common, empty } = useIntlayer("links");
   const [links, setLinks] = useState(initialLinks);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
-  const [isCreatingLink, setIsCreatingLink] = useState(false);
   const { user } = useUser();
   const { signOut } = useClerk();
 
@@ -214,17 +219,8 @@ export default function UserRoute() {
     (navigation.formMethod ?? "").toLowerCase() === "post" &&
     typeof navigation.formData?.get("url") === "string" &&
     navigation.formData?.get("intent") == null;
-
-  useEffect(() => {
-    if (isCreateSubmission) {
-      setIsCreatingLink(true);
-      return;
-    }
-
-    if (navigation.state === "idle") {
-      setIsCreatingLink(false);
-    }
-  }, [isCreateSubmission, navigation.state]);
+  const isCreatingLink =
+    isCreateSubmission || createLinkFetcher.state !== "idle";
 
   useEffect(() => {
     if (navigation.state === "submitting") {
@@ -245,6 +241,7 @@ export default function UserRoute() {
 
   const isSubmitting = navigation.state === "submitting";
   const isLoadingMore = loadMoreFetcher.state !== "idle";
+  const isAddingFromClipboard = createLinkFetcher.state !== "idle";
   const canLoadMore = Boolean(nextCursor);
   const loadMoreParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -256,6 +253,29 @@ export default function UserRoute() {
     }
     return Array.from(params.entries());
   }, [searchParams]);
+
+  const handleAddFromClipboard = async () => {
+    if (isSubmitting || isAddingFromClipboard) {
+      return;
+    }
+    if (!navigator.clipboard?.readText) {
+      return;
+    }
+
+    try {
+      const text = await navigator.clipboard.readText();
+      const normalized = normalizeLinkUrl(text);
+      if (!normalized.ok) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.set("url", normalized.url);
+      createLinkFetcher.submit(formData, { method: "post" });
+    } catch {
+      // Clipboard permission denied or unavailable.
+    }
+  };
 
   return (
     <div className="w-full h-full max-w-7xl relative">
@@ -280,6 +300,15 @@ export default function UserRoute() {
             actionData={actionData}
             isSubmitting={isSubmitting}
           />
+          <Button
+            type="button"
+            className="size-10 z-50 hover:bg-primary/80"
+            onClick={handleAddFromClipboard}
+            disabled={isSubmitting || isAddingFromClipboard}
+            aria-label="클립보드 링크 추가"
+          >
+            <ClipboardTextIcon />
+          </Button>
           <Button className={"size-10 z-50 hover:bg-primary/80"}>
             <LocalizedLink to={`/user/${id}/settings`}>
               <FadersIcon />

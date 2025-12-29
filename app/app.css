@@ -43,6 +43,14 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  :lang(ko) {
+    font-family: var(--font-pretendard);
+  }
+
+  :lang(en) {
+    font-family: var(--font-satoshi);
+  }
 }
 
 .font-anton {

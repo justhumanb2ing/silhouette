@@ -33,14 +33,10 @@ type AddLinkCardProps = {
   categories: CategoryListItem[];
   actionData: ActionDataLike | undefined;
   isSubmitting: boolean;
-  onCreateStart?: () => void;
 };
 
 export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
-  function AddLinkCard(
-    { userId, categories, actionData, isSubmitting, onCreateStart },
-    ref
-  ) {
+  function AddLinkCard({ userId, categories, actionData, isSubmitting }, ref) {
     const {
       common,
       addLink: { trigger, title, fields, category, newCategory },
@@ -49,20 +45,20 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
     const hasErrors = Boolean(
       actionData?.fieldErrors?.url || actionData?.formError
     );
-  const [open, setOpen] = useState(hasErrors);
-  const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
+    const [open, setOpen] = useState(hasErrors);
+    const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
 
-  useEffect(() => {
-    if (isSubmitting) {
-      setOpen(false);
-      return;
-    }
+    useEffect(() => {
+      if (isSubmitting) {
+        setOpen(false);
+        return;
+      }
 
-    if (hasErrors) {
-      setOpen(true);
-    }
-  }, [hasErrors, isSubmitting]);
+      if (hasErrors) {
+        setOpen(true);
+      }
+    }, [hasErrors, isSubmitting]);
 
     useEffect(() => {
       if (!open) {
@@ -88,7 +84,6 @@ export const AddLinkCard = forwardRef<HTMLFormElement, AddLinkCardProps>(
               className="flex flex-col gap-4"
               onSubmit={() => {
                 setOpen(false);
-                onCreateStart?.();
               }}
             >
               <DrawerHeader className="pb-2 md:text-left">

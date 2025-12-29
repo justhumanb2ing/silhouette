@@ -44,7 +44,7 @@ export default function LandingRoute() {
   const signUpHref = signedInHref ?? "/sign-up";
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <header className="sticky top-0 z-50 w-full bg-white">
         <div className="w-full px-6 h-16 flex justify-between items-center">
           <div className="flex items-center justify-start">
