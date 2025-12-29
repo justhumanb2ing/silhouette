@@ -3,12 +3,53 @@ import { data, redirect } from "react-router";
 
 import { getPrisma } from "../../../app/lib/get-prisma";
 
-import { fetchOgMetadataForUrl } from "../fetch-og.server";
+type FetchOgEdgeResult =
+  | {
+      ok: true;
+      data: {
+        url: string;
+        title: string | null;
+        description: string | null;
+        imageUrl: string | null;
+      };
+    }
+  | { ok: false; message: string };
+
+async function fetchOgViaEdgeFunction({
+  url,
+  token,
+}: {
+  url: string;
+  token: string;
+}): Promise<FetchOgEdgeResult> {
+  const response = await fetch(
+    "https://louogijoxoorskrvzvei.supabase.co/functions/v1/fetch-og",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ url }),
+    }
+  );
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: `Edge function error (${response.status})`,
+    };
+  }
+
+  return response.json();
+}
+
 import { createLinkForUser } from "../links.server";
 import { parseCreateLinkInput } from "../validations/create-link";
 
 import { resolveCategory } from "./resolve-category.server";
 import type { LinksActionAuth } from "./types";
+import { fetchOgMetadataForUrl } from "../fetch-og.server";
 
 type CreateLinkInput = {
   auth: LinksActionAuth;
@@ -16,7 +57,7 @@ type CreateLinkInput = {
   request: Request;
 };
 
-type CreateLinkOgResult = Awaited<ReturnType<typeof fetchOgMetadataForUrl>>;
+type CreateLinkOgResult = FetchOgEdgeResult;
 
 /**
  * 새로운 링크를 생성한다.
